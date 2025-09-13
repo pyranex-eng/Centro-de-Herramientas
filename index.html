@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Enlaces Dinámicos (con scroll)</title>
+    <style>
+        :root {
+            /* Tema oscuro por defecto */
+            --bg-color: #121212;
+            --main-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --secondary-text-color: #a0a0a0;
+            --card-bg: #2a2a2a;
+            --card-border: #333;
+            --hover-transform: translateY(-8px);
+            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            --button-color: #007bff;
+            --button-hover-color: #0056b3;
+            --modal-bg: #222;
+            --modal-border: #444;
+            --input-bg: #333;
+            --input-border: #555;
+            --input-text: #fff;
+            --delete-btn-bg: #dc3545;
+            --delete-btn-hover: #c82333;
+            --edit-btn-bg: #ffc107;
+            --edit-btn-hover: #e0a800;
+        }
+
+        body.light-theme {
+            /* Tema claro */
+            --bg-color: #f0f2f5;
+            --main-bg: #fff;
+            --text-color: #333;
+            --secondary-text-color: #6c757d;
+            --card-bg: #f8f9fa;
+            --card-border: #e9ecef;
+            --hover-transform: translateY(-8px);
+            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            --button-color: #007bff;
+            --button-hover-color: #0056b3;
+            --modal-bg: #fff;
+            --modal-border: #888;
+            --input-bg: #fff;
+            --input-border: #ccc;
+            --input-text: #333;
+            --delete-btn-bg: #dc3545;
+            --delete-btn-hover: #c82333;
+            --edit-btn-bg: #ffc107;
+            --edit-btn-hover: #e0a800;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.5s, color 0.5s;
+            position: relative;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+            background-color: var(--bg-color);
+            transition: background-color 0.5s;
+        }
+
+        .controls {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .controls button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: var(--button-color);
+            color: white;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        #auth-btn, #register-btn {
+            background-color: #28a745;
+        }
+
+        #auth-btn:hover, #register-btn:hover {
+            background-color: #218838;
+        }
+        
+        #logout-btn {
+            background-color: #dc3545;
+            display: none; /* Ocultar por defecto */
+        }
+
+        #logout-btn:hover {
+            background-color: #c82333;
+        }
+
+        .controls button:hover {
+            background-color: var(--button-hover-color);
+        }
+        
+        #auth-form {
+            display: none; /* Ocultar por defecto */
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            background-color: var(--card-bg);
+            display: flex;
+            gap: 10px;
+        }
+        
+        #auth-form input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            flex-grow: 1;
+        }
+
+        .grid-container-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            background-color: var(--main-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            transition: background-color 0.5s, box-shadow 0.5s;
+            box-sizing: border-box;
+            background-size: cover;
+            background-position: center;
+            background-attachment: local;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 15px;
+            }
+        }
+        
+        .grid-container::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .grid-container::-webkit-scrollbar-thumb {
+            background-color: var(--secondary-text-color);
+            border-radius: 5px;
+        }
+        
+        .grid-container::-webkit-scrollbar-track {
+            background-color: transparent;
+        }
+
+        .grid-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 20px 10px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: var(--secondary-text-color);
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            position: relative;
+            cursor: move;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.5s, border-color 0.5s;
+        }
+
+        .grid-item:hover {
+            transform: var(--hover-transform);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .grid-item.dragging {
+            opacity: 0.5;
+            transform: scale(1.05);
+        }
+
+        .grid-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            object-fit: contain;
+        }
+
+        .link-title {
+            font-size: 14px;
+            word-break: break-all;
+            color: var(--text-color);
+            font-weight: bold;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        .delete-btn, .edit-btn {
+            position: absolute;
+            top: 5px;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s, background-color 0.5s;
+        }
+
+        .edit-btn {
+            right: 5px;
+            background-color: var(--edit-btn-bg);
+            color: var(--text-color);
+        }
+
+        .delete-btn {
+            left: 5px;
+            background-color: var(--delete-btn-bg);
+        }
+        
+        .delete-btn:hover {
+            background-color: var(--delete-btn-hover);
+        }
+        
+        .edit-btn:hover {
+            background-color: var(--edit-btn-hover);
+        }
+
+        .grid-item:hover .delete-btn, .grid-item:hover .edit-btn {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: var(--modal-bg);
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid var(--modal-border);
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            color: var(--text-color);
+        }
+
+        .close-btn {
+            color: var(--secondary-text-color);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-content input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            background-color: var(--input-bg);
+            color: var(--input-text);
+        }
+
+        .modal-content button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas" class="particle-canvas"></canvas>
+
+    <div class="controls">
+        <div id="auth-form">
+            <input type="email" id="email-input" placeholder="Correo electrónico" required>
+            <input type="password" id="password-input" placeholder="Contraseña" required>
+            <button id="auth-btn">Iniciar Sesión</button>
+            <button id="register-btn">Registrarse</button>
+        </div>
+        <button id="logout-btn" style="display: none;">Cerrar Sesión</button>
+        <button id="theme-toggle-btn">Cambiar Tema</button>
+        <button id="add-link-btn" style="display: none;">Agregar Enlace</button>
+        <button id="set-bg-table-btn" style="display: none;">Fondo con Imagen (Tabla)</button>
+        <button id="remove-bg-table-btn" style="display: none;">Quitar Fondo (Tabla)</button>
+    </div>
+
+    <div class="grid-container-wrapper">
+        <div class="grid-container" id="grid-container"></div>
+    </div>
+    
+    <input type="file" id="file-input" accept="image/*" style="display: none;">
+
+    <div id="link-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Agregar/Editar Enlace</h2>
+            <input type="hidden" id="link-key">
+            <input type="text" id="link-url" placeholder="URL del sitio web" required>
+            <input type="text" id="link-title" placeholder="Título (opcional)">
+            <button id="save-link-btn">Guardar</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importa las funciones necesarias de los SDK de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
+        // Importa las funciones de Realtime Database
+        import { getDatabase, ref, push, onValue, update, remove, set } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        // Importa las funciones de Autenticación
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+        // Tu configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDtC4AXEbZEFuiQZTil3x-4eezjy5eIa6k",
+            authDomain: "centro-de-herramientas.firebaseapp.com",
+            projectId: "centro-de-herramientas",
+            storageBucket: "centro-de-herramientas.firebasestorage.app",
+            messagingSenderId: "245445518910",
+            appId: "1:245445518910:web:b8d93a3fc2cbafced3936f",
+            measurementId: "G-9ZR3EWTD7N"
+        };
+        
+        // Inicializa Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        // Referencias a la base de datos (se actualizarán con el ID de usuario)
+        let userUid = null;
+        let linksRef = null;
+        let backgroundRef = null;
+
+        const gridContainerWrapper = document.getElementById('grid-container-wrapper');
+        const gridContainer = document.getElementById('grid-container');
+        const authForm = document.getElementById('auth-form');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const authBtn = document.getElementById('auth-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const setBgTableBtn = document.getElementById('set-bg-table-btn');
+        const removeBgTableBtn = document.getElementById('remove-bg-table-btn');
+        const addLinkBtn = document.getElementById('add-link-btn');
+        const fileInput = document.getElementById('file-input');
+        const modal = document.getElementById('link-modal');
+        const saveLinkBtn = document.getElementById('save-link-btn');
+        const closeBtn = document.querySelector('.close-btn');
+        const linkUrlInput = document.getElementById('link-url');
+        const linkTitleInput = document.getElementById('link-title');
+        const linkKeyInput = document.getElementById('link-key');
+
+        let links = {};
+        let draggedItem = null;
+        let particleAnimation = null;
+
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const numParticles = 100;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createParticle() {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = Math.random() * 2 + 1;
+            const speedX = (Math.random() - 0.5) * 0.5;
+            const speedY = (Math.random() - 0.5) * 0.5;
+            const color = Math.random() < 0.5 ? 'rgba(0, 255, 255, 0.5)' : 'rgba(255, 215, 0, 0.5)';
+            return { x, y, size, speedX, speedY, color };
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < numParticles; i++) {
+                particles.push(createParticle());
+            }
+        }
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-color');
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+
+                p.x += p.speedX;
+                p.y += p.speedY;
+
+                if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+                    Object.assign(p, createParticle());
+                }
+            });
+
+            particleAnimation = requestAnimationFrame(drawParticles);
+        }
+
+        function stopParticleAnimation() {
+            cancelAnimationFrame(particleAnimation);
+        }
+
+        function startParticleAnimation() {
+            if (!particleAnimation) {
+                initParticles();
+                drawParticles();
+            }
+        }
+
+        function setTableBackground(url) {
+            gridContainerWrapper.style.backgroundImage = `url('${url}')`;
+            gridContainerWrapper.style.backgroundColor = 'transparent';
+        }
+        
+        function removeTableBackground() {
+            gridContainerWrapper.style.backgroundImage = 'none';
+            gridContainerWrapper.style.backgroundColor = '';
+        }
+
+        function renderGrid() {
+            gridContainer.innerHTML = '';
+            const linkArray = Object.keys(links).map(key => ({ ...links[key], key }));
+            linkArray.sort((a, b) => a.order - b.order);
+
+            linkArray.forEach((link, index) => {
+                const gridItem = document.createElement('div');
+                gridItem.className = 'grid-item';
+                gridItem.setAttribute('draggable', 'true');
+                gridItem.setAttribute('data-key', link.key);
+                
+                const linkAnchor = document.createElement('a');
+                linkAnchor.href = link.url;
+                linkAnchor.target = '_blank';
+                linkAnchor.style.display = 'contents';
+
+                const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${new URL(link.url).hostname}`;
+                const img = document.createElement('img');
+                img.src = faviconUrl;
+                img.alt = link.title + ' Icon';
+                linkAnchor.appendChild(img);
+
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'link-title';
+                titleSpan.textContent = link.title;
+                linkAnchor.appendChild(titleSpan);
+
+                gridItem.appendChild(linkAnchor);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.innerHTML = '&times;';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteLink(link.key);
+                };
+                gridItem.appendChild(deleteBtn);
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn';
+                editBtn.innerHTML = '&#9998;';
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openModal(link.key);
+                };
+                gridItem.appendChild(editBtn);
+
+                gridItem.addEventListener('dragstart', (e) => {
+                    draggedItem = gridItem;
+                    setTimeout(() => gridItem.classList.add('dragging'), 0);
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', e.target.dataset.key);
+                });
+
+                gridItem.addEventListener('dragend', () => {
+                    if (draggedItem) {
+                        draggedItem.classList.remove('dragging');
+                        draggedItem = null;
+                        updateLinkOrder();
+                    }
+                });
+
+                gridItem.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const toItem = e.target.closest('.grid-item');
+                    if (toItem && draggedItem !== toItem) {
+                        const rect = toItem.getBoundingClientRect();
+                        const isAfter = e.clientY > rect.top + rect.height / 2;
+                        gridContainer.insertBefore(draggedItem, isAfter ? toItem.nextSibling : toItem);
+                    }
+                });
+
+                gridItem.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                });
+
+                gridContainer.appendChild(gridItem);
+            });
+        }
+        
+        function updateLinkOrder() {
+            if (!userUid) return;
+            const updates = {};
+            Array.from(gridContainer.children).forEach((item, index) => {
+                const key = item.dataset.key;
+                if (key) {
+                    updates[`${key}/order`] = index;
+                }
+            });
+            update(linksRef, updates);
+        }
+
+        function openModal(key = null) {
+            if (!userUid) {
+                alert('Debes iniciar sesión para agregar o editar enlaces.');
+                return;
+            }
+            if (key) {
+                const link = links[key];
+                linkUrlInput.value = link.url;
+                linkTitleInput.value = link.title;
+                linkKeyInput.value = key;
+            } else {
+                linkUrlInput.value = '';
+                linkTitleInput.value = '';
+                linkKeyInput.value = '';
+            }
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function saveLink() {
+            if (!userUid) return alert('Debes iniciar sesión para guardar enlaces.');
+
+            const url = linkUrlInput.value.trim();
+            if (!url) {
+                alert('La URL es obligatoria.');
+                return;
+            }
+            const title = linkTitleInput.value.trim() || new URL(url).hostname;
+            const key = linkKeyInput.value;
+
+            const linkData = { url, title, order: Object.keys(links).length };
+
+            if (key) {
+                const linkRef = ref(database, `users/${userUid}/links/${key}`);
+                update(linkRef, linkData);
+            } else {
+                push(linksRef, linkData);
+            }
+            closeModal();
+        }
+
+        function deleteLink(key) {
+            if (!userUid) return alert('Debes iniciar sesión para eliminar enlaces.');
+            if (confirm('¿Estás seguro de que quieres eliminar este enlace?')) {
+                const linkRef = ref(database, `users/${userUid}/links/${key}`);
+                remove(linkRef);
+            }
+        }
+        
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            const isLightTheme = document.body.classList.contains('light-theme');
+            themeToggleBtn.textContent = isLightTheme ? 'Modo Oscuro' : 'Modo Claro';
+            stopParticleAnimation();
+            startParticleAnimation();
+        }
+
+        // Event Listeners
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('load', () => {
+            resizeCanvas();
+            startParticleAnimation();
+        });
+
+        addLinkBtn.addEventListener('click', () => openModal());
+        closeBtn.addEventListener('click', closeModal);
+        saveLinkBtn.addEventListener('click', saveLink);
+        themeToggleBtn.addEventListener('click', toggleTheme);
+        
+        authBtn.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                alert(`Error al iniciar sesión: ${error.message}`);
+                console.error("Error signing in:", error);
+            }
+        });
+        
+        registerBtn.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert("Usuario registrado con éxito. Ahora puedes iniciar sesión.");
+            } catch (error) {
+                alert(`Error al registrar usuario: ${error.message}`);
+                console.error("Error registering:", error);
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
+        
+        setBgTableBtn.addEventListener('click', () => {
+            if (!userUid) return;
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', (event) => {
+            if (!userUid) return;
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Image = e.target.result;
+                    set(backgroundRef, { image: base64Image });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        removeBgTableBtn.addEventListener('click', () => {
+            if (!userUid) return;
+            remove(backgroundRef);
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Escucha los cambios en el estado de autenticación
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Usuario logueado
+                userUid = user.uid;
+                authForm.style.display = 'none';
+                logoutBtn.style.display = 'block';
+                
+                // Mostrar botones para usuarios logueados
+                document.getElementById('add-link-btn').style.display = 'block';
+                document.getElementById('set-bg-table-btn').style.display = 'block';
+                document.getElementById('remove-bg-table-btn').style.display = 'block';
+
+                // Actualiza las referencias de la base de datos a la ruta del usuario
+                linksRef = ref(database, `users/${userUid}/links`);
+                backgroundRef = ref(database, `users/${userUid}/background`);
+
+                // Atachar listeners a las nuevas referencias
+                onValue(linksRef, (snapshot) => {
+                    links = snapshot.val() || {};
+                    renderGrid();
+                });
+                
+                onValue(backgroundRef, (snapshot) => {
+                    const bgData = snapshot.val();
+                    if (bgData && bgData.image) {
+                        setTableBackground(bgData.image);
+                    } else {
+                        removeTableBackground();
+                    }
+                });
+
+            } else {
+                // Usuario deslogueado
+                userUid = null;
+                authForm.style.display = 'flex';
+                logoutBtn.style.display = 'none';
+                
+                // Ocultar botones para usuarios no logueados
+                document.getElementById('add-link-btn').style.display = 'none';
+                document.getElementById('set-bg-table-btn').style.display = 'none';
+                document.getElementById('remove-bg-table-btn').style.display = 'none';
+
+                // Limpiar la cuadrícula y las referencias
+                gridContainer.innerHTML = '';
+                links = {};
+                linksRef = null;
+                backgroundRef = null;
+            }
+        });
+
+    </script>
+</body>
+</html>
