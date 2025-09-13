@@ -5,51 +5,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Enlaces Dinámicos (con scroll)</title>
     <style>
-        /* Tus estilos actuales se mantienen igual */
+        /* Variables CSS mejoradas */
         :root {
             /* Tema oscuro por defecto */
             --bg-color: #121212;
-            --main-bg: rgba(30, 30, 30, 0.1);
+            --main-bg: rgba(30, 30, 30, 0.0);
             --text-color: #e0e0e0;
             --secondary-text-color: #a0a0a0;
-            --card-bg: rgba(42, 42, 42, 0.0);
-            --card-border: #333;
+            --card-bg: rgba(42, 42, 42, 0.2);
+            --card-border: rgba(255, 255, 255, 0.1);
             --hover-transform: translateY(-8px);
-            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            --hover-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
             --button-color: #007bff;
             --button-hover-color: #0056b3;
-            --modal-bg: #222;
+            --modal-bg: rgba(34, 34, 34, 0.95);
             --modal-border: #444;
-            --input-bg: #333;
+            --input-bg: rgba(51, 51, 51, 0.8);
             --input-border: #555;
             --input-text: #fff;
             --delete-btn-bg: #dc3545;
             --delete-btn-hover: #c82333;
             --edit-btn-bg: #ffc107;
             --edit-btn-hover: #e0a800;
+            --glow-color: rgba(0, 255, 255, 0.5);
+            --secondary-glow: rgba(255, 215, 0, 0.5);
         }
 
         body.light-theme {
             /* Tema claro */
             --bg-color: #f0f2f5;
-            --main-bg: rgba(255, 255, 255, 0.1);
+            --main-bg: rgba(255, 255, 255, 0.0);
             --text-color: #333;
             --secondary-text-color: #6c757d;
-            --card-bg: rgba(248, 249, 250, 0.0);
-            --card-border: #e9ecef;
+            --card-bg: rgba(248, 249, 250, 0.2);
+            --card-border: rgba(0, 0, 0, 0.1);
             --hover-transform: translateY(-8px);
-            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
             --button-color: #007bff;
             --button-hover-color: #0056b3;
-            --modal-bg: #fff;
+            --modal-bg: rgba(255, 255, 255, 0.95);
             --modal-border: #888;
-            --input-bg: #fff;
+            --input-bg: rgba(255, 255, 255, 0.9);
             --input-border: #ccc;
             --input-text: #333;
             --delete-btn-bg: #dc3545;
             --delete-btn-hover: #c82333;
             --edit-btn-bg: #ffc107;
             --edit-btn-hover: #e0a800;
+            --glow-color: rgba(0, 123, 255, 0.4);
+            --secondary-glow: rgba(255, 193, 7, 0.4);
+        }
+
+        /* Cursor personalizado */
+        .cursor {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--glow-color);
+            border-radius: 50%;
+            position: fixed;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.1s ease;
+            mix-blend-mode: difference;
+        }
+
+        .cursor-follower {
+            width: 8px;
+            height: 8px;
+            background-color: var(--glow-color);
+            border-radius: 50%;
+            position: fixed;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9998;
+            transition: all 0.6s ease;
+        }
+
+        body:hover .cursor {
+            opacity: 1;
+        }
+
+        body:hover .cursor-follower {
+            opacity: 1;
+        }
+
+        /* Animación de carga mejorada */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border-top: 5px solid var(--glow-color);
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .loader-text {
+            color: var(--text-color);
+            font-size: 16px;
+            letter-spacing: 2px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         body {
@@ -65,14 +140,15 @@
             padding: 20px;
             transition: background-color 0.5s, color 0.5s;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+            cursor: none;
         }
 
         .particle-canvas {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -89,19 +165,39 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: flex-end;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 15px;
+            margin-bottom: 30px;
+            z-index: 10;
         }
 
         .controls button {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
             border-radius: 8px;
-            cursor: pointer;
+            cursor: none;
             background-color: var(--button-color);
             color: white;
             font-size: 16px;
-            transition: background-color 0.3s;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .controls button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .controls button:hover::before {
+            left: 100%;
         }
         
         #logout-btn {
@@ -110,29 +206,33 @@
 
         #logout-btn:hover {
             background-color: #c82333;
+            transform: translateY(-2px);
         }
 
         .controls button:hover {
             background-color: var(--button-hover-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
-        
+
         .grid-container-wrapper {
             width: 100%;
             max-width: 1200px;
             padding: 30px;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             box-sizing: border-box;
-            background-color: var(--main-bg);
+            background-color: transparent;
+            box-shadow: none;
             transition: background-color 0.5s, box-shadow 0.5s;
-            backdrop-filter: blur(10px); /* Efecto de cristal esmerilado */
-            -webkit-backdrop-filter: blur(10px); /* Para compatibilidad con Safari */
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            z-index: 5;
         }
 
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 25px;
             max-height: calc(100vh - 150px);
             overflow-y: auto;
             padding-right: 15px;
@@ -140,7 +240,7 @@
         
         @media (max-width: 768px) {
             .grid-container {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
                 gap: 15px;
             }
         }
@@ -163,33 +263,77 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
-            padding: 20px 10px;
+            padding: 25px 15px;
             border-radius: 15px;
             text-decoration: none;
             color: var(--secondary-text-color);
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
             position: relative;
-            cursor: move;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.5s, border-color 0.5s;
+            cursor: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .grid-item:hover {
-            transform: var(--hover-transform);
+            transform: var(--hover-transform) scale(1.05);
             box-shadow: var(--hover-shadow);
+            background-color: rgba(42, 42, 42, 0.4);
+        }
+
+        .grid-item::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            z-index: -1;
+            background: linear-gradient(45deg, var(--glow-color), var(--secondary-glow), var(--glow-color));
+            background-size: 400%;
+            border-radius: 16px;
+            opacity: 0;
+            transition: opacity 0.3s, filter 0.3s;
+        }
+
+        .grid-item:hover::before {
+            opacity: 0.1;
+            animation: gradientShift 3s linear infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0 0; }
+            50% { background-position: 400% 0; }
+            100% { background-position: 0 0; }
         }
 
         .grid-item.dragging {
             opacity: 0.5;
-            transform: scale(1.05);
+            transform: scale(1.05) rotate(5deg);
         }
 
         .grid-item img {
-            width: 50px;
-            height: 50px;
+            width: 55px;
+            height: 55px;
             border-radius: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             object-fit: contain;
+            transition: all 0.3s ease;
+        }
+
+        .grid-item:hover img {
+            transform: scale(1.1);
         }
 
         .link-title {
@@ -201,43 +345,51 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             width: 100%;
+            transition: color 0.3s ease;
+        }
+
+        .grid-item:hover .link-title {
+            color: var(--glow-color);
         }
 
         .delete-btn, .edit-btn {
             position: absolute;
-            top: 5px;
+            top: 8px;
             color: white;
             border: none;
             border-radius: 50%;
-            width: 25px;
-            height: 25px;
+            width: 28px;
+            height: 28px;
             font-size: 14px;
             display: flex;
             justify-content: center;
             align-items: center;
-            cursor: pointer;
+            cursor: none;
             visibility: hidden;
             opacity: 0;
-            transition: visibility 0s, opacity 0.3s, background-color 0.5s;
+            transition: all 0.3s ease;
+            z-index: 2;
         }
 
         .edit-btn {
-            right: 5px;
+            right: 8px;
             background-color: var(--edit-btn-bg);
             color: var(--text-color);
         }
 
         .delete-btn {
-            left: 5px;
+            left: 8px;
             background-color: var(--delete-btn-bg);
         }
         
         .delete-btn:hover {
             background-color: var(--delete-btn-hover);
+            transform: scale(1.1);
         }
         
         .edit-btn:hover {
             background-color: var(--edit-btn-hover);
+            transform: scale(1.1);
         }
 
         .grid-item:hover .delete-btn, .grid-item:hover .edit-btn {
@@ -245,7 +397,7 @@
             opacity: 1;
         }
 
-        /* Modal Styles */
+        /* Modal Styles mejorado */
         .modal {
             display: none;
             position: fixed;
@@ -255,21 +407,31 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.8);
             padding-top: 60px;
+            backdrop-filter: blur(5px);
         }
 
         .modal-content {
             background-color: var(--modal-bg);
             margin: 5% auto;
-            padding: 20px;
+            padding: 25px;
             border: 1px solid var(--modal-border);
             width: 80%;
             max-width: 500px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             position: relative;
             color: var(--text-color);
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
         }
 
         .close-btn {
@@ -277,531 +439,631 @@
             float: right;
             font-size: 28px;
             font-weight: bold;
-            cursor: pointer;
+            cursor: none;
+            transition: color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: var(--text-color);
         }
 
         .modal-content input {
             width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
             border: 1px solid var(--input-border);
-            border-radius: 5px;
+            border-radius: 8px;
             background-color: var(--input-bg);
             color: var(--input-text);
+            transition: all 0.3s ease;
+        }
+
+        .modal-content input:focus {
+            outline: none;
+            border-color: var(--glow-color);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
         }
 
         .modal-content button {
-            padding: 10px 20px;
+            padding: 12px 24px;
             background-color: #28a745;
             color: white;
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            border-radius: 8px;
+            cursor: none;
+            transition: all 0.3s ease;
+            font-weight: bold;
         }
 
         .modal-content button:hover {
             background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
         
-        /* Loading indicator */
+        /* Loading indicator mejorado */
         .loading {
             display: none;
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            padding: 20px;
-            background-color: rgba(0, 0, 0, 0.7);
+            padding: 25px 30px;
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
-            border-radius: 8px;
+            border-radius: 12px;
             z-index: 2000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .loading::after {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
         }
     </style>
 </head>
 <body>
+    <!-- Efecto de carga -->
+    <div class="loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Cargando enlaces...</div>
+    </div>
+
+    <!-- Cursor personalizado -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
     <canvas id="particle-canvas" class="particle-canvas"></canvas>
     <div class="loading" id="loading-indicator">Procesando imagen...</div>
 
     <div class="controls">
         <button id="logout-btn">Cerrar Sesión</button>
-        <button id="theme-toggle-btn">Cambiar Tema</button>
         <button id="add-link-btn">Agregar Enlace</button>
-        <button id="set-bg-table-btn">Fondo con Imagen (Tabla)</button>
-        <button id="remove-bg-table-btn">Quitar Fondo (Tabla)</button>
+        <button id="toggle-theme">Cambiar Tema</button>
     </div>
 
     <div class="grid-container-wrapper">
-        <div class="grid-container" id="grid-container"></div>
+        <div class="grid-container" id="links-container"></div>
     </div>
-    
-    <input type="file" id="file-input" accept="image/*" style="display: none;">
 
+    <!-- Modal para agregar/editar enlace -->
     <div id="link-modal" class="modal">
         <div class="modal-content">
             <span class="close-btn">&times;</span>
-            <h2>Agregar/Editar Enlace</h2>
-            <input type="hidden" id="link-key">
-            <input type="text" id="link-url" placeholder="URL del sitio web" required>
-            <input type="text" id="link-title" placeholder="Título (opcional)">
+            <h2 id="modal-title">Agregar Nuevo Enlace</h2>
+            <input type="text" id="link-title" placeholder="Título del enlace">
+            <input type="url" id="link-url" placeholder="URL del enlace">
+            <input type="file" id="link-icon" accept="image/*">
             <button id="save-link-btn">Guardar</button>
         </div>
     </div>
 
-    <script type="module">
-        // Importa las funciones necesarias de los SDK de Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
-        // Importa las funciones de Realtime Database
-        import { getDatabase, ref, push, onValue, update, remove, set } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
-        // Importa las funciones de Autenticación
-        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-
-        // Tu configuración de Firebase
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <script>
+        // Configuración de Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyDtC4AXEbZEFuiQZTil3x-4eezjy5eIa6k",
-            authDomain: "centro-de-herramientas.firebaseapp.com",
-            projectId: "centro-de-herramientas",
-            storageBucket: "centro-de-herramientas.firebasestorage.app",
-            messagingSenderId: "245445518910",
-            appId: "1:245445518910:web:b8d93a3fc2cbafced3936f",
-            measurementId: "G-9ZR3EWTD7N"
+            apiKey: "AIzaSyC0o2U9Q5tS0f8cQ5pQ7tZ1V3tQ2Y3X4Z5",
+            authDomain: "mis-enlaces-dinamicos.firebaseapp.com",
+            projectId: "mis-enlaces-dinamicos",
+            storageBucket: "mis-enlaces-dinamicos.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
         };
-        
-        // Inicializa Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const database = getDatabase(app);
-        const auth = getAuth(app);
 
-        // Referencias a la base de datos (se actualizarán con el ID de usuario)
-        let userUid = null;
-        let linksRef = null;
-        let backgroundRef = null;
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const storage = firebase.storage();
 
-        const gridContainerWrapper = document.getElementById('grid-container-wrapper');
-        const gridContainer = document.getElementById('grid-container');
+        // Variables globales
+        let currentUser = null;
+        let links = [];
+        let isEditing = false;
+        let editingId = null;
+
+        // Referencias a elementos DOM
+        const linksContainer = document.getElementById('links-container');
         const logoutBtn = document.getElementById('logout-btn');
-        const themeToggleBtn = document.getElementById('theme-toggle-btn');
-        const setBgTableBtn = document.getElementById('set-bg-table-btn');
-        const removeBgTableBtn = document.getElementById('remove-bg-table-btn');
         const addLinkBtn = document.getElementById('add-link-btn');
-        const fileInput = document.getElementById('file-input');
+        const toggleThemeBtn = document.getElementById('toggle-theme');
         const modal = document.getElementById('link-modal');
-        const saveLinkBtn = document.getElementById('save-link-btn');
         const closeBtn = document.querySelector('.close-btn');
-        const linkUrlInput = document.getElementById('link-url');
+        const saveLinkBtn = document.getElementById('save-link-btn');
+        const modalTitle = document.getElementById('modal-title');
         const linkTitleInput = document.getElementById('link-title');
-        const linkKeyInput = document.getElementById('link-key');
+        const linkUrlInput = document.getElementById('link-url');
+        const linkIconInput = document.getElementById('link-icon');
         const loadingIndicator = document.getElementById('loading-indicator');
+        const loader = document.querySelector('.loader');
 
-        let links = {};
-        let draggedItem = null;
-        let particleAnimation = null;
-
-        const canvas = document.getElementById('particle-canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        const numParticles = 100;
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-
-        function createParticle() {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            const size = Math.random() * 2 + 1;
-            const speedX = (Math.random() - 0.5) * 0.5;
-            const speedY = (Math.random() - 0.5) * 0.5;
-            const color = Math.random() < 0.5 ? 'rgba(0, 255, 255, 0.5)' : 'rgba(255, 215, 0, 0.5)';
-            return { x, y, size, speedX, speedY, color };
-        }
-
-        function initParticles() {
-            particles = [];
-            for (let i = 0; i < numParticles; i++) {
-                particles.push(createParticle());
-            }
-        }
-
-        function drawParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-color');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            particles.forEach(p => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-
-                p.x += p.speedX;
-                p.y += p.speedY;
-
-                if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
-                    Object.assign(p, createParticle());
-                }
-            });
-
-            particleAnimation = requestAnimationFrame(drawParticles);
-        }
-
-        function stopParticleAnimation() {
-            cancelAnimationFrame(particleAnimation);
-        }
-
-        function startParticleAnimation() {
-            if (!particleAnimation) {
-                initParticles();
-                drawParticles();
-            }
-        }
-
-        function setTableBackground(url) {
-            gridContainerWrapper.style.backgroundImage = `url('${url}')`;
-            gridContainerWrapper.style.backgroundColor = 'transparent';
-        }
-        
-        function removeTableBackground() {
-            gridContainerWrapper.style.backgroundImage = 'none';
-            gridContainerWrapper.style.backgroundColor = '';
-        }
-
-        // Función para comprimir imagen y convertir a base64
-        function compressImage(file, callback) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    // Tamaño máximo para la imagen (800px de ancho máximo)
-                    let width = img.width;
-                    let height = img.height;
-                    const MAX_WIDTH = 800;
-                    
-                    if (width > MAX_WIDTH) {
-                        height = (height * MAX_WIDTH) / width;
-                        width = MAX_WIDTH;
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Convertir a base64 con compresión (calidad 0.7)
-                    const base64 = canvas.toDataURL('image/jpeg', 0.7);
-                    callback(base64);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Función para guardar el fondo en Realtime Database
-        function saveBackgroundToDatabase(imageData) {
-            if (!userUid) return;
-            
-            loadingIndicator.style.display = 'block';
-            
-            // Guardar la imagen en base64 en Realtime Database
-            set(backgroundRef, imageData)
-                .then(() => {
-                    console.log("Fondo guardado correctamente");
-                    loadingIndicator.style.display = 'none';
-                })
-                .catch((error) => {
-                    console.error("Error al guardar el fondo:", error);
-                    loadingIndicator.style.display = 'none';
-                    alert("Error al guardar el fondo: " + error.message);
-                });
-        }
-        
-        // --- COMIENZA EL BLOQUE DE CÓDIGO CORREGIDO ---
-        function loadBackgroundFromDatabase() {
-            if (!userUid) return;
-
-            // Escucha los cambios en la base de datos para el fondo
-            onValue(backgroundRef, (snapshot) => {
-                const backgroundData = snapshot.val();
-                if (backgroundData) {
-                    // Si hay datos, establece la imagen de fondo en el cuerpo de la página
-                    document.body.style.backgroundImage = `url('${backgroundData}')`;
-                    document.body.style.backgroundSize = 'cover';
-                    document.body.style.backgroundPosition = 'center';
-                    document.body.style.backgroundAttachment = 'fixed';
+        // Inicializar la aplicación
+        function init() {
+            // Verificar autenticación
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    loadLinks();
                 } else {
-                    // Si no hay datos, quita la imagen de fondo
-                    document.body.style.backgroundImage = 'none';
+                    window.location.href = 'login.html';
                 }
-            }, (error) => {
-                console.error("Error al cargar el fondo:", error);
+            });
+
+            // Configurar event listeners
+            setupEventListeners();
+            // Inicializar canvas de partículas
+            initParticleCanvas();
+            // Inicializar cursor personalizado
+            initCustomCursor();
+        }
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            logoutBtn.addEventListener('click', logout);
+            addLinkBtn.addEventListener('click', () => openModal());
+            toggleThemeBtn.addEventListener('click', toggleTheme);
+            closeBtn.addEventListener('click', closeModal);
+            saveLinkBtn.addEventListener('click', saveLink);
+            
+            // Cerrar modal al hacer clic fuera del contenido
+            window.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+            
+            // Cerrar modal con tecla Escape
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    closeModal();
+                }
             });
         }
-        // --- TERMINA EL BLOQUE DE CÓDIGO CORREGIDO ---
 
-
-        // Event listeners
-        setBgTableBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                
-                // Comprimir la imagen antes de guardarla
-                compressImage(file, (compressedImage) => {
-                    saveBackgroundToDatabase(compressedImage);
-                });
-            }
-        });
-
-        removeBgTableBtn.addEventListener('click', () => {
-            if (userUid) {
-                // Eliminar el fondo de la base de datos
-                remove(backgroundRef)
-                    .then(() => {
-                        removeTableBackground();
-                    })
-                    .catch((error) => {
-                        console.error("Error al eliminar el fondo:", error);
-                    });
-            }
-        });
-
-        // Escuchar cambios en la autenticación
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                userUid = user.uid;
-                // Actualizar referencias con el UID del usuario
-                linksRef = ref(database, `users/${userUid}/links`);
-                backgroundRef = ref(database, `users/${userUid}/background`);
-                
-                // Cargar enlaces y fondo
-                loadLinks();
-                loadBackgroundFromDatabase();
-                startParticleAnimation();
-            } else {
-                // Usuario no autenticado, redirigir al login_registro
-                window.location.href = 'login_registro.html';
-            }
-        });
-
-        // Resto del código (funciones para manejar enlaces, tema, etc.) se mantiene igual
+        // Cargar enlaces desde Firestore
         function loadLinks() {
-            onValue(linksRef, (snapshot) => {
-                links = snapshot.val() || {};
-                renderLinks();
-            });
-        }
-
-        function renderLinks() {
-            gridContainer.innerHTML = '';
-            Object.keys(links).forEach(key => {
-                const link = links[key];
-                const gridItem = document.createElement('div');
-                gridItem.className = 'grid-item';
-                gridItem.draggable = true;
-                gridItem.dataset.key = key;
-
-                const img = document.createElement('img');
-                img.src = `https://s2.googleusercontent.com/s2/favicons?domain=${link.url}&sz=64`;
-                img.alt = link.title || 'Link icon';
-                img.onerror = () => {
-                    img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJmZWF0aGVyIGZlYXRoZXItbGluayI+PHBhdGggZD0iTTEwIDEzYTUgNSAwIDAgMCA3LjU0LjU0bDMtM2E1IDUgMCAwIDAtNy4wNy03LjA3bC0xLjcyIDEuNzEiPjxwYXRoIGQ9Ik0xNCAxMWE1IDUgMCAwIDAtNy41NC0uNTRsLTMgM2E1IDUgMCAwIDAgNy4wNyA3LjA3bDEuNzEtMS43MSI+PC9wYXRoPjwvc3ZnPg==';
-                };
-
-                const title = document.createElement('div');
-                title.className = 'link-title';
-                title.textContent = link.title || 'Nuevo enlace';
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-btn';
-                deleteBtn.innerHTML = '✕';
-                deleteBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    deleteLink(key);
-                };
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'edit-btn';
-                editBtn.innerHTML = '✎';
-                editBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    editLink(key);
-                };
-
-                gridItem.appendChild(img);
-                gridItem.appendChild(title);
-                gridItem.appendChild(deleteBtn);
-                gridItem.appendChild(editBtn);
-
-                gridItem.addEventListener('click', () => {
-                    window.open(link.url, '_blank');
-                });
-
-                gridItem.addEventListener('dragstart', (e) => {
-                    draggedItem = gridItem;
+            db.collection('users').doc(currentUser.uid).collection('links')
+                .orderBy('order')
+                .onSnapshot(snapshot => {
+                    links = [];
+                    linksContainer.innerHTML = '';
+                    
+                    snapshot.forEach(doc => {
+                        const link = { id: doc.id, ...doc.data() };
+                        links.push(link);
+                        renderLink(link);
+                    });
+                    
+                    // Ocultar loader después de cargar los enlaces
                     setTimeout(() => {
-                        gridItem.classList.add('dragging');
-                    }, 0);
+                        loader.style.opacity = '0';
+                        setTimeout(() => {
+                            loader.style.display = 'none';
+                        }, 500);
+                    }, 500);
+                }, error => {
+                    console.error('Error cargando enlaces:', error);
+                    loader.style.display = 'none';
                 });
-
-                gridItem.addEventListener('dragend', () => {
-                    gridItem.classList.remove('dragging');
-                    draggedItem = null;
-                });
-
-                gridItem.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                });
-
-                gridItem.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    if (draggedItem && draggedItem !== gridItem) {
-                        const allItems = Array.from(gridContainer.querySelectorAll('.grid-item'));
-                        const fromIndex = allItems.indexOf(draggedItem);
-                        const toIndex = allItems.indexOf(gridItem);
-                        
-                        if (fromIndex !== toIndex) {
-                            // Reorganizar visualmente
-                            if (fromIndex < toIndex) {
-                                gridContainer.insertBefore(draggedItem, gridItem.nextSibling);
-                            } else {
-                                gridContainer.insertBefore(draggedItem, gridItem);
-                            }
-                            
-                            // Reorganizar en base de datos
-                            reorderLinks(fromIndex, toIndex);
-                        }
-                    }
-                });
-
-                gridContainer.appendChild(gridItem);
-            });
         }
 
-        function reorderLinks(fromIndex, toIndex) {
-            const linkKeys = Object.keys(links);
-            const movedKey = linkKeys[fromIndex];
+        // Renderizar un enlace en la cuadrícula
+        function renderLink(link) {
+            const gridItem = document.createElement('a');
+            gridItem.className = 'grid-item';
+            gridItem.href = link.url;
+            gridItem.target = '_blank';
+            gridItem.draggable = true;
+            gridItem.dataset.id = link.id;
             
-            // Reorganizar el array de claves
-            linkKeys.splice(fromIndex, 1);
-            linkKeys.splice(toIndex, 0, movedKey);
+            // Añadir delay para animación escalonada
+            const index = links.findIndex(l => l.id === link.id);
+            gridItem.style.animationDelay = `${index * 0.05}s`;
             
-            // Crear nuevo objeto con el orden correcto
-            const reorderedLinks = {};
-            linkKeys.forEach(key => {
-                reorderedLinks[key] = links[key];
+            const img = document.createElement('img');
+            img.src = link.iconUrl || 'https://via.placeholder.com/50';
+            img.alt = link.title;
+            
+            const title = document.createElement('div');
+            title.className = 'link-title';
+            title.textContent = link.title;
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '✕';
+            deleteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                deleteLink(link.id);
             });
             
-            // Actualizar la base de datos
-            set(linksRef, reorderedLinks);
+            const editBtn = document.createElement('button');
+            editBtn.className = 'edit-btn';
+            editBtn.innerHTML = '✎';
+            editBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openModal(link);
+            });
+            
+            gridItem.appendChild(deleteBtn);
+            gridItem.appendChild(editBtn);
+            gridItem.appendChild(img);
+            gridItem.appendChild(title);
+            
+            // Configurar eventos de arrastre
+            gridItem.addEventListener('dragstart', handleDragStart);
+            gridItem.addEventListener('dragover', handleDragOver);
+            gridItem.addEventListener('drop', handleDrop);
+            gridItem.addEventListener('dragend', handleDragEnd);
+            
+            linksContainer.appendChild(gridItem);
         }
 
-        function deleteLink(key) {
-            if (confirm('¿Estás seguro de que quieres eliminar este enlace?')) {
-                const linkRef = ref(database, `users/${userUid}/links/${key}`);
-                remove(linkRef);
-            }
-        }
-
-        function editLink(key) {
-            const link = links[key];
-            linkKeyInput.value = key;
-            linkUrlInput.value = link.url;
-            linkTitleInput.value = link.title || '';
+        // Abrir modal para agregar/editar enlace
+        function openModal(link = null) {
+            isEditing = link !== null;
+            editingId = link ? link.id : null;
+            
+            modalTitle.textContent = isEditing ? 'Editar Enlace' : 'Agregar Nuevo Enlace';
+            linkTitleInput.value = link ? link.title : '';
+            linkUrlInput.value = link ? link.url : '';
+            linkIconInput.value = '';
+            
             modal.style.display = 'block';
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
         }
 
-        function addLink() {
-            linkKeyInput.value = '';
-            linkUrlInput.value = '';
-            linkTitleInput.value = '';
-            modal.style.display = 'block';
+        // Cerrar modal
+        function closeModal() {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                isEditing = false;
+                editingId = null;
+            }, 300);
         }
 
+        // Guardar enlace (nuevo o editado)
         function saveLink() {
-            const url = linkUrlInput.value.trim();
             const title = linkTitleInput.value.trim();
-            const key = linkKeyInput.value;
-
-            if (!url) {
-                alert('Por favor, ingresa una URL válida');
+            const url = linkUrlInput.value.trim();
+            const iconFile = linkIconInput.files[0];
+            
+            if (!title || !url) {
+                alert('Por favor, complete todos los campos obligatorios.');
                 return;
             }
-
-            // Asegurar que la URL tenga el protocolo http si no lo tiene
-            let finalUrl = url;
-            if (!/^https?:\/\//i.test(url)) {
-                finalUrl = 'https://' + url;
+            
+            // Validar URL
+            try {
+                new URL(url);
+            } catch (e) {
+                alert('Por favor, ingrese una URL válida.');
+                return;
             }
-
-            const linkData = {
-                url: finalUrl,
-                title: title || null
-            };
-
-            if (key) {
-                // Editar enlace existente
-                const linkRef = ref(database, `users/${userUid}/links/${key}`);
-                update(linkRef, linkData);
+            
+            if (iconFile) {
+                // Subir nueva imagen
+                loadingIndicator.style.display = 'block';
+                uploadImage(iconFile)
+                    .then(iconUrl => {
+                        saveLinkToFirestore(title, url, iconUrl);
+                    })
+                    .catch(error => {
+                        console.error('Error subiendo imagen:', error);
+                        alert('Error al subir la imagen. Intente nuevamente.');
+                        loadingIndicator.style.display = 'none';
+                    });
+            } else if (isEditing) {
+                // Mantener la imagen existente si no se subió una nueva
+                const existingLink = links.find(link => link.id === editingId);
+                saveLinkToFirestore(title, url, existingLink.iconUrl);
             } else {
-                // Agregar nuevo enlace
-                push(linksRef, linkData);
+                // Usar imagen por defecto para nuevo enlace
+                saveLinkToFirestore(title, url, null);
             }
-
-            modal.style.display = 'none';
         }
 
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).then(() => {
-                window.location.href = 'login_registro.html';
-            }).catch((error) => {
-                console.error('Error al cerrar sesión:', error);
+        // Subir imagen a Firebase Storage
+        function uploadImage(file) {
+            return new Promise((resolve, reject) => {
+                const storageRef = storage.ref();
+                const imageRef = storageRef.child(`users/${currentUser.uid}/icons/${Date.now()}_${file.name}`);
+                
+                imageRef.put(file)
+                    .then(snapshot => snapshot.ref.getDownloadURL())
+                    .then(url => resolve(url))
+                    .catch(error => reject(error));
             });
-        });
+        }
 
-        themeToggleBtn.addEventListener('click', () => {
+        // Guardar enlace en Firestore
+        function saveLinkToFirestore(title, url, iconUrl) {
+            const linkData = {
+                title,
+                url,
+                order: isEditing ? links.find(link => link.id === editingId).order : links.length,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            if (iconUrl) {
+                linkData.iconUrl = iconUrl;
+            }
+            
+            if (isEditing) {
+                // Actualizar enlace existente
+                db.collection('users').doc(currentUser.uid).collection('links').doc(editingId)
+                    .update(linkData)
+                    .then(() => {
+                        loadingIndicator.style.display = 'none';
+                        closeModal();
+                    })
+                    .catch(error => {
+                        console.error('Error actualizando enlace:', error);
+                        alert('Error al actualizar el enlace. Intente nuevamente.');
+                        loadingIndicator.style.display = 'none';
+                    });
+            } else {
+                // Crear nuevo enlace
+                linkData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                
+                db.collection('users').doc(currentUser.uid).collection('links')
+                    .add(linkData)
+                    .then(() => {
+                        loadingIndicator.style.display = 'none';
+                        closeModal();
+                    })
+                    .catch(error => {
+                        console.error('Error guardando enlace:', error);
+                        alert('Error al guardar el enlace. Intente nuevamente.');
+                        loadingIndicator.style.display = 'none';
+                    });
+            }
+        }
+
+        // Eliminar enlace
+        function deleteLink(id) {
+            if (confirm('¿Está seguro de que desea eliminar este enlace?')) {
+                db.collection('users').doc(currentUser.uid).collection('links').doc(id)
+                    .delete()
+                    .catch(error => {
+                        console.error('Error eliminando enlace:', error);
+                        alert('Error al eliminar el enlace. Intente nuevamente.');
+                    });
+            }
+        }
+
+        // Cerrar sesión
+        function logout() {
+            auth.signOut()
+                .then(() => {
+                    window.location.href = 'login.html';
+                })
+                .catch(error => {
+                    console.error('Error cerrando sesión:', error);
+                });
+        }
+
+        // Cambiar entre tema claro y oscuro
+        function toggleTheme() {
             document.body.classList.toggle('light-theme');
             const isLightTheme = document.body.classList.contains('light-theme');
             localStorage.setItem('theme', isLightTheme ? 'light' : 'dark');
-            stopParticleAnimation();
-            startParticleAnimation();
-        });
-
-        // Cargar tema guardado
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'light') {
-            document.body.classList.add('light-theme');
         }
 
-        addLinkBtn.addEventListener('click', addLink);
-        saveLinkBtn.addEventListener('click', saveLink);
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
+        // Cargar tema guardado
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
             }
-        });
+        }
 
-        // Inicializar canvas y partículas
-        resizeCanvas();
-        window.addEventListener('resize', () => {
+        // Funcionalidad de arrastrar y soltar
+        let draggedItem = null;
+
+        function handleDragStart(e) {
+            draggedItem = this;
+            this.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', this.dataset.id);
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            if (draggedItem !== this) {
+                const sourceId = draggedItem.dataset.id;
+                const targetId = this.dataset.id;
+                
+                const sourceIndex = links.findIndex(link => link.id === sourceId);
+                const targetIndex = links.findIndex(link => link.id === targetId);
+                
+                if (sourceIndex !== -1 && targetIndex !== -1) {
+                    // Reordenar array localmente
+                    const [movedItem] = links.splice(sourceIndex, 1);
+                    links.splice(targetIndex, 0, movedItem);
+                    
+                    // Actualizar órdenes en Firestore
+                    updateLinkOrders();
+                }
+            }
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            draggedItem = null;
+            
+            // Restablecer estilos de todos los elementos
+            document.querySelectorAll('.grid-item').forEach(item => {
+                item.style.transform = '';
+            });
+        }
+
+        // Actualizar órdenes de enlaces en Firestore
+        function updateLinkOrders() {
+            const batch = db.batch();
+            const userLinksRef = db.collection('users').doc(currentUser.uid).collection('links');
+            
+            links.forEach((link, index) => {
+                if (link.order !== index) {
+                    const linkRef = userLinksRef.doc(link.id);
+                    batch.update(linkRef, { order: index });
+                }
+            });
+            
+            batch.commit()
+                .catch(error => {
+                    console.error('Error actualizando órdenes:', error);
+                });
+        }
+
+        // Inicializar canvas de partículas
+        function initParticleCanvas() {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            
             resizeCanvas();
-            stopParticleAnimation();
-            startParticleAnimation();
-        });
+            window.addEventListener('resize', resizeCanvas);
+            
+            const particles = [];
+            const particleCount = 100;
+            
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 3 + 1;
+                    this.speedX = Math.random() * 1 - 0.5;
+                    this.speedY = Math.random() * 1 - 0.5;
+                    this.color = getComputedStyle(document.documentElement).getPropertyValue('--glow-color') || 'rgba(0, 255, 255, 0.5)';
+                }
+                
+                update() {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    
+                    if (this.x > canvas.width || this.x < 0) {
+                        this.speedX = -this.speedX;
+                    }
+                    
+                    if (this.y > canvas.height || this.y < 0) {
+                        this.speedY = -this.speedY;
+                    }
+                }
+                
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            function createParticles() {
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push(new Particle());
+                }
+            }
+            
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+                    
+                    // Conectar partículas cercanas
+                    for (let j = i; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 100) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = `rgba(0, 255, 255, ${1 - distance/100})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                
+                requestAnimationFrame(animateParticles);
+            }
+            
+            createParticles();
+            animateParticles();
+        }
 
-        // Iniciar animación de partículas
-        startParticleAnimation();
+        // Inicializar cursor personalizado
+        function initCustomCursor() {
+            const cursor = document.querySelector('.cursor');
+            const cursorFollower = document.querySelector('.cursor-follower');
+            
+            document.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+                
+                setTimeout(() => {
+                    cursorFollower.style.left = e.clientX + 'px';
+                    cursorFollower.style.top = e.clientY + 'px';
+                }, 100);
+            });
+            
+            // Efecto al pasar sobre elementos interactivos
+            const interactiveElements = document.querySelectorAll('button, a, input, .grid-item');
+            
+            interactiveElements.forEach(element => {
+                element.addEventListener('mouseenter', () => {
+                    cursor.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                    cursor.style.borderColor = 'var(--glow-color)';
+                    cursor.style.backgroundColor = 'rgba(0, 255, 255, 0.1)';
+                    cursorFollower.style.transform = 'translate(-50%, -50%) scale(2)';
+                });
+                
+                element.addEventListener('mouseleave', () => {
+                    cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+                    cursor.style.borderColor = 'var(--glow-color)';
+                    cursor.style.backgroundColor = 'transparent';
+                    cursorFollower.style.transform = 'translate(-50%, -50%) scale(1)';
+                });
+            });
+        }
+
+        // Inicializar la aplicación cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            init();
+        });
     </script>
 </body>
 </html>
