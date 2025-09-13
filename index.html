@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Enlaces Dinámicos (con scroll)</title>
     <style>
+        /* Tus estilos actuales se mantienen igual */
         :root {
             /* Tema oscuro por defecto */
             --bg-color: #121212;
@@ -102,18 +103,9 @@
             font-size: 16px;
             transition: background-color 0.3s;
         }
-
-        #auth-btn, #register-btn {
-            background-color: #28a745;
-        }
-
-        #auth-btn:hover, #register-btn:hover {
-            background-color: #218838;
-        }
         
         #logout-btn {
             background-color: #dc3545;
-            display: none; /* Ocultar por defecto */
         }
 
         #logout-btn:hover {
@@ -124,26 +116,6 @@
             background-color: var(--button-hover-color);
         }
         
-        #auth-form {
-            display: none; /* Ocultar por defecto */
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            background-color: var(--card-bg);
-            display: flex;
-            gap: 10px;
-        }
-        
-        #auth-form input {
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid var(--input-border);
-            background-color: var(--input-bg);
-            color: var(--input-text);
-            flex-grow: 1;
-        }
-
         .grid-container-wrapper {
             width: 100%;
             max-width: 1200px;
@@ -331,23 +303,32 @@
         .modal-content button:hover {
             background-color: #218838;
         }
+        
+        /* Loading indicator */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 8px;
+            z-index: 2000;
+        }
     </style>
 </head>
 <body>
     <canvas id="particle-canvas" class="particle-canvas"></canvas>
+    <div class="loading" id="loading-indicator">Procesando imagen...</div>
 
     <div class="controls">
-        <div id="auth-form">
-            <input type="email" id="email-input" placeholder="Correo electrónico" required>
-            <input type="password" id="password-input" placeholder="Contraseña" required>
-            <button id="auth-btn">Iniciar Sesión</button>
-            <button id="register-btn">Registrarse</button>
-        </div>
-        <button id="logout-btn" style="display: none;">Cerrar Sesión</button>
+        <button id="logout-btn">Cerrar Sesión</button>
         <button id="theme-toggle-btn">Cambiar Tema</button>
-        <button id="add-link-btn" style="display: none;">Agregar Enlace</button>
-        <button id="set-bg-table-btn" style="display: none;">Fondo con Imagen (Tabla)</button>
-        <button id="remove-bg-table-btn" style="display: none;">Quitar Fondo (Tabla)</button>
+        <button id="add-link-btn">Agregar Enlace</button>
+        <button id="set-bg-table-btn">Fondo con Imagen (Tabla)</button>
+        <button id="remove-bg-table-btn">Quitar Fondo (Tabla)</button>
     </div>
 
     <div class="grid-container-wrapper">
@@ -374,7 +355,7 @@
         // Importa las funciones de Realtime Database
         import { getDatabase, ref, push, onValue, update, remove, set } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
         // Importa las funciones de Autenticación
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
         // Tu configuración de Firebase
         const firebaseConfig = {
@@ -400,11 +381,6 @@
 
         const gridContainerWrapper = document.getElementById('grid-container-wrapper');
         const gridContainer = document.getElementById('grid-container');
-        const authForm = document.getElementById('auth-form');
-        const emailInput = document.getElementById('email-input');
-        const passwordInput = document.getElementById('password-input');
-        const authBtn = document.getElementById('auth-btn');
-        const registerBtn = document.getElementById('register-btn');
         const logoutBtn = document.getElementById('logout-btn');
         const themeToggleBtn = document.getElementById('theme-toggle-btn');
         const setBgTableBtn = document.getElementById('set-bg-table-btn');
@@ -417,6 +393,7 @@
         const linkUrlInput = document.getElementById('link-url');
         const linkTitleInput = document.getElementById('link-title');
         const linkKeyInput = document.getElementById('link-key');
+        const loadingIndicator = document.getElementById('loading-indicator');
 
         let links = {};
         let draggedItem = null;
@@ -492,277 +469,330 @@
             gridContainerWrapper.style.backgroundColor = '';
         }
 
-        function renderGrid() {
-            gridContainer.innerHTML = '';
-            const linkArray = Object.keys(links).map(key => ({ ...links[key], key }));
-            linkArray.sort((a, b) => a.order - b.order);
+        // Función para comprimir imagen y convertir a base64
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Tamaño máximo para la imagen (800px de ancho máximo)
+                    let width = img.width;
+                    let height = img.height;
+                    const MAX_WIDTH = 800;
+                    
+                    if (width > MAX_WIDTH) {
+                        height = (height * MAX_WIDTH) / width;
+                        width = MAX_WIDTH;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convertir a base64 con compresión (calidad 0.7)
+                    const base64 = canvas.toDataURL('image/jpeg', 0.7);
+                    callback(base64);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
 
-            linkArray.forEach((link, index) => {
+        // Función para guardar el fondo en Realtime Database
+        function saveBackgroundToDatabase(imageData) {
+            if (!userUid) return;
+            
+            loadingIndicator.style.display = 'block';
+            
+            // Guardar la imagen en base64 en Realtime Database
+            set(backgroundRef, imageData)
+                .then(() => {
+                    console.log("Fondo guardado correctamente");
+                    loadingIndicator.style.display = 'none';
+                })
+                .catch((error) => {
+                    console.error("Error al guardar el fondo:", error);
+                    loadingIndicator.style.display = 'none';
+                    alert("Error al guardar el fondo: " + error.message);
+                });
+        }
+
+        // Función para cargar el fondo desde Realtime Database
+        function loadBackgroundFromDatabase() {
+            if (!userUid) return;
+            
+            onValue(backgroundRef, (snapshot) => {
+                const backgroundData = snapshot.val();
+                if (backgroundData) {
+                    setTableBackground(backgroundData);
+                }
+            }, (error) => {
+                console.error("Error al cargar el fondo:", error);
+            });
+        }
+
+        // Event listeners
+        setBgTableBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                
+                // Comprimir la imagen antes de guardarla
+                compressImage(file, (compressedImage) => {
+                    saveBackgroundToDatabase(compressedImage);
+                });
+            }
+        });
+
+        removeBgTableBtn.addEventListener('click', () => {
+            if (userUid) {
+                // Eliminar el fondo de la base de datos
+                remove(backgroundRef)
+                    .then(() => {
+                        removeTableBackground();
+                    })
+                    .catch((error) => {
+                        console.error("Error al eliminar el fondo:", error);
+                    });
+            }
+        });
+
+        // Escuchar cambios en la autenticación
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userUid = user.uid;
+                // Actualizar referencias con el UID del usuario
+                linksRef = ref(database, `users/${userUid}/links`);
+                backgroundRef = ref(database, `users/${userUid}/background`);
+                
+                // Cargar enlaces y fondo
+                loadLinks();
+                loadBackgroundFromDatabase();
+                startParticleAnimation();
+            } else {
+                // Usuario no autenticado, redirigir al login_registro
+                window.location.href = 'login_registro.html';
+            }
+        });
+
+        // Resto del código (funciones para manejar enlaces, tema, etc.) se mantiene igual
+        function loadLinks() {
+            onValue(linksRef, (snapshot) => {
+                links = snapshot.val() || {};
+                renderLinks();
+            });
+        }
+
+        function renderLinks() {
+            gridContainer.innerHTML = '';
+            Object.keys(links).forEach(key => {
+                const link = links[key];
                 const gridItem = document.createElement('div');
                 gridItem.className = 'grid-item';
-                gridItem.setAttribute('draggable', 'true');
-                gridItem.setAttribute('data-key', link.key);
-                
-                const linkAnchor = document.createElement('a');
-                linkAnchor.href = link.url;
-                linkAnchor.target = '_blank';
-                linkAnchor.style.display = 'contents';
+                gridItem.draggable = true;
+                gridItem.dataset.key = key;
 
-                const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${new URL(link.url).hostname}`;
                 const img = document.createElement('img');
-                img.src = faviconUrl;
-                img.alt = link.title + ' Icon';
-                linkAnchor.appendChild(img);
+                img.src = `https://s2.googleusercontent.com/s2/favicons?domain=${link.url}&sz=64`;
+                img.alt = link.title || 'Link icon';
+                img.onerror = () => {
+                    img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJmZWF0aGVyIGZlYXRoZXItbGluayI+PHBhdGggZD0iTTEwIDEzYTUgNSAwIDAgMCA3LjU0LjU0bDMtM2E1IDUgMCAwIDAtNy4wNy03LjA3bC0xLjcyIDEuNzEiPjxwYXRoIGQ9Ik0xNCAxMWE1IDUgMCAwIDAtNy41NC0uNTRsLTMgM2E1IDUgMCAwIDAgNy4wNyA3LjA3bDEuNzEtMS43MSI+PC9wYXRoPjwvc3ZnPg==';
+                };
 
-                const titleSpan = document.createElement('span');
-                titleSpan.className = 'link-title';
-                titleSpan.textContent = link.title;
-                linkAnchor.appendChild(titleSpan);
-
-                gridItem.appendChild(linkAnchor);
+                const title = document.createElement('div');
+                title.className = 'link-title';
+                title.textContent = link.title || 'Nuevo enlace';
 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-btn';
-                deleteBtn.innerHTML = '&times;';
+                deleteBtn.innerHTML = '✕';
                 deleteBtn.onclick = (e) => {
                     e.stopPropagation();
-                    deleteLink(link.key);
+                    deleteLink(key);
                 };
-                gridItem.appendChild(deleteBtn);
 
                 const editBtn = document.createElement('button');
                 editBtn.className = 'edit-btn';
-                editBtn.innerHTML = '&#9998;';
+                editBtn.innerHTML = '✎';
                 editBtn.onclick = (e) => {
                     e.stopPropagation();
-                    openModal(link.key);
+                    editLink(key);
                 };
+
+                gridItem.appendChild(img);
+                gridItem.appendChild(title);
+                gridItem.appendChild(deleteBtn);
                 gridItem.appendChild(editBtn);
+
+                gridItem.addEventListener('click', () => {
+                    window.open(link.url, '_blank');
+                });
 
                 gridItem.addEventListener('dragstart', (e) => {
                     draggedItem = gridItem;
-                    setTimeout(() => gridItem.classList.add('dragging'), 0);
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', e.target.dataset.key);
+                    setTimeout(() => {
+                        gridItem.classList.add('dragging');
+                    }, 0);
                 });
 
                 gridItem.addEventListener('dragend', () => {
-                    if (draggedItem) {
-                        draggedItem.classList.remove('dragging');
-                        draggedItem = null;
-                        updateLinkOrder();
-                    }
+                    gridItem.classList.remove('dragging');
+                    draggedItem = null;
                 });
 
                 gridItem.addEventListener('dragover', (e) => {
                     e.preventDefault();
-                    const toItem = e.target.closest('.grid-item');
-                    if (toItem && draggedItem !== toItem) {
-                        const rect = toItem.getBoundingClientRect();
-                        const isAfter = e.clientY > rect.top + rect.height / 2;
-                        gridContainer.insertBefore(draggedItem, isAfter ? toItem.nextSibling : toItem);
-                    }
                 });
 
                 gridItem.addEventListener('drop', (e) => {
                     e.preventDefault();
+                    if (draggedItem && draggedItem !== gridItem) {
+                        const allItems = Array.from(gridContainer.querySelectorAll('.grid-item'));
+                        const fromIndex = allItems.indexOf(draggedItem);
+                        const toIndex = allItems.indexOf(gridItem);
+                        
+                        if (fromIndex !== toIndex) {
+                            // Reorganizar visualmente
+                            if (fromIndex < toIndex) {
+                                gridContainer.insertBefore(draggedItem, gridItem.nextSibling);
+                            } else {
+                                gridContainer.insertBefore(draggedItem, gridItem);
+                            }
+                            
+                            // Reorganizar en base de datos
+                            reorderLinks(fromIndex, toIndex);
+                        }
+                    }
                 });
 
                 gridContainer.appendChild(gridItem);
             });
         }
-        
-        function updateLinkOrder() {
-            if (!userUid) return;
-            const updates = {};
-            Array.from(gridContainer.children).forEach((item, index) => {
-                const key = item.dataset.key;
-                if (key) {
-                    updates[`${key}/order`] = index;
-                }
+
+        function reorderLinks(fromIndex, toIndex) {
+            const linkKeys = Object.keys(links);
+            const movedKey = linkKeys[fromIndex];
+            
+            // Reorganizar el array de claves
+            linkKeys.splice(fromIndex, 1);
+            linkKeys.splice(toIndex, 0, movedKey);
+            
+            // Crear nuevo objeto con el orden correcto
+            const reorderedLinks = {};
+            linkKeys.forEach(key => {
+                reorderedLinks[key] = links[key];
             });
-            update(linksRef, updates);
-        }
-
-        function openModal(key = null) {
-            if (!userUid) {
-                alert('Debes iniciar sesión para agregar o editar enlaces.');
-                return;
-            }
-            if (key) {
-                const link = links[key];
-                linkUrlInput.value = link.url;
-                linkTitleInput.value = link.title;
-                linkKeyInput.value = key;
-            } else {
-                linkUrlInput.value = '';
-                linkTitleInput.value = '';
-                linkKeyInput.value = '';
-            }
-            modal.style.display = 'block';
-        }
-
-        function closeModal() {
-            modal.style.display = 'none';
-        }
-
-        function saveLink() {
-            if (!userUid) return alert('Debes iniciar sesión para guardar enlaces.');
-
-            const url = linkUrlInput.value.trim();
-            if (!url) {
-                alert('La URL es obligatoria.');
-                return;
-            }
-            const title = linkTitleInput.value.trim() || new URL(url).hostname;
-            const key = linkKeyInput.value;
-
-            const linkData = { url, title, order: Object.keys(links).length };
-
-            if (key) {
-                const linkRef = ref(database, `users/${userUid}/links/${key}`);
-                update(linkRef, linkData);
-            } else {
-                push(linksRef, linkData);
-            }
-            closeModal();
+            
+            // Actualizar la base de datos
+            set(linksRef, reorderedLinks);
         }
 
         function deleteLink(key) {
-            if (!userUid) return alert('Debes iniciar sesión para eliminar enlaces.');
             if (confirm('¿Estás seguro de que quieres eliminar este enlace?')) {
                 const linkRef = ref(database, `users/${userUid}/links/${key}`);
                 remove(linkRef);
             }
         }
-        
-        function toggleTheme() {
-            document.body.classList.toggle('light-theme');
-            const isLightTheme = document.body.classList.contains('light-theme');
-            themeToggleBtn.textContent = isLightTheme ? 'Modo Oscuro' : 'Modo Claro';
-            stopParticleAnimation();
-            startParticleAnimation();
+
+        function editLink(key) {
+            const link = links[key];
+            linkKeyInput.value = key;
+            linkUrlInput.value = link.url;
+            linkTitleInput.value = link.title || '';
+            modal.style.display = 'block';
         }
 
-        // Event Listeners
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('load', () => {
-            resizeCanvas();
+        function addLink() {
+            linkKeyInput.value = '';
+            linkUrlInput.value = '';
+            linkTitleInput.value = '';
+            modal.style.display = 'block';
+        }
+
+        function saveLink() {
+            const url = linkUrlInput.value.trim();
+            const title = linkTitleInput.value.trim();
+            const key = linkKeyInput.value;
+
+            if (!url) {
+                alert('Por favor, ingresa una URL válida');
+                return;
+            }
+
+            // Asegurar que la URL tenga el protocolo http si no lo tiene
+            let finalUrl = url;
+            if (!/^https?:\/\//i.test(url)) {
+                finalUrl = 'https://' + url;
+            }
+
+            const linkData = {
+                url: finalUrl,
+                title: title || null
+            };
+
+            if (key) {
+                // Editar enlace existente
+                const linkRef = ref(database, `users/${userUid}/links/${key}`);
+                update(linkRef, linkData);
+            } else {
+                // Agregar nuevo enlace
+                push(linksRef, linkData);
+            }
+
+            modal.style.display = 'none';
+        }
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                window.location.href = 'login_registro.html';
+            }).catch((error) => {
+                console.error('Error al cerrar sesión:', error);
+            });
+        });
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            const isLightTheme = document.body.classList.contains('light-theme');
+            localStorage.setItem('theme', isLightTheme ? 'light' : 'dark');
+            stopParticleAnimation();
             startParticleAnimation();
         });
 
-        addLinkBtn.addEventListener('click', () => openModal());
-        closeBtn.addEventListener('click', closeModal);
+        // Cargar tema guardado
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+        }
+
+        addLinkBtn.addEventListener('click', addLink);
         saveLinkBtn.addEventListener('click', saveLink);
-        themeToggleBtn.addEventListener('click', toggleTheme);
-        
-        authBtn.addEventListener('click', async () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                alert(`Error al iniciar sesión: ${error.message}`);
-                console.error("Error signing in:", error);
-            }
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
         });
-        
-        registerBtn.addEventListener('click', async () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                alert("Usuario registrado con éxito. Ahora puedes iniciar sesión.");
-            } catch (error) {
-                alert(`Error al registrar usuario: ${error.message}`);
-                console.error("Error registering:", error);
+
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
             }
         });
 
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth);
-        });
-        
-        setBgTableBtn.addEventListener('click', () => {
-            if (!userUid) return;
-            fileInput.click();
-        });
-        
-        fileInput.addEventListener('change', (event) => {
-            if (!userUid) return;
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const base64Image = e.target.result;
-                    set(backgroundRef, { image: base64Image });
-                };
-                reader.readAsDataURL(file);
-            }
+        // Inicializar canvas y partículas
+        resizeCanvas();
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            stopParticleAnimation();
+            startParticleAnimation();
         });
 
-        removeBgTableBtn.addEventListener('click', () => {
-            if (!userUid) return;
-            remove(backgroundRef);
-        });
-
-        window.addEventListener('click', (event) => {
-            if (event.target === modal) {
-                closeModal();
-            }
-        });
-
-        // Escucha los cambios en el estado de autenticación
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // Usuario logueado
-                userUid = user.uid;
-                authForm.style.display = 'none';
-                logoutBtn.style.display = 'block';
-                
-                // Mostrar botones para usuarios logueados
-                document.getElementById('add-link-btn').style.display = 'block';
-                document.getElementById('set-bg-table-btn').style.display = 'block';
-                document.getElementById('remove-bg-table-btn').style.display = 'block';
-
-                // Actualiza las referencias de la base de datos a la ruta del usuario
-                linksRef = ref(database, `users/${userUid}/links`);
-                backgroundRef = ref(database, `users/${userUid}/background`);
-
-                // Atachar listeners a las nuevas referencias
-                onValue(linksRef, (snapshot) => {
-                    links = snapshot.val() || {};
-                    renderGrid();
-                });
-                
-                onValue(backgroundRef, (snapshot) => {
-                    const bgData = snapshot.val();
-                    if (bgData && bgData.image) {
-                        setTableBackground(bgData.image);
-                    } else {
-                        removeTableBackground();
-                    }
-                });
-
-            } else {
-                // Usuario deslogueado
-                userUid = null;
-                authForm.style.display = 'flex';
-                logoutBtn.style.display = 'none';
-                
-                // Ocultar botones para usuarios no logueados
-                document.getElementById('add-link-btn').style.display = 'none';
-                document.getElementById('set-bg-table-btn').style.display = 'none';
-                document.getElementById('remove-bg-table-btn').style.display = 'none';
-
-                // Limpiar la cuadrícula y las referencias
-                gridContainer.innerHTML = '';
-                links = {};
-                linksRef = null;
-                backgroundRef = null;
-            }
-        });
-
+        // Iniciar animación de partículas
+        startParticleAnimation();
     </script>
 </body>
 </html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión / Registrarse</title>
+    <style>
+        :root {
+            /* Tema oscuro por defecto */
+            --bg-color: #121212;
+            --main-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --secondary-text-color: #a0a0a0;
+            --card-bg: #2a2a2a;
+            --card-border: #333;
+            --button-color: #007bff;
+            --button-hover-color: #0056b3;
+            --input-bg: #333;
+            --input-border: #555;
+            --input-text: #fff;
+        }
+
+        body.light-theme {
+            /* Tema claro */
+            --bg-color: #f0f2f5;
+            --main-bg: #fff;
+            --text-color: #333;
+            --secondary-text-color: #6c757d;
+            --card-bg: #f8f9fa;
+            --card-border: #e9ecef;
+            --button-color: #007bff;
+            --button-hover-color: #0056b3;
+            --input-bg: #fff;
+            --input-border: #ccc;
+            --input-text: #333;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.5s, color 0.5s;
+        }
+
+        #auth-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            background-color: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.5s, border-color 0.5s, box-shadow 0.5s;
+        }
+
+        .auth-form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        h2 {
+            margin-top: 0;
+            color: var(--text-color);
+            text-align: center;
+        }
+        
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .auth-form input {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--input-text);
+        }
+        
+        .auth-form button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .auth-form button:hover {
+            background-color: #218838;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .auth-toggle button {
+            background: none;
+            border: none;
+            color: var(--button-color);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #theme-toggle-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: var(--button-color);
+            color: white;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        #theme-toggle-btn:hover {
+            background-color: var(--button-hover-color);
+        }
+
+    </style>
+</head>
+<body>
+    <button id="theme-toggle-btn">Cambiar Tema</button>
+
+    <div id="auth-container">
+        <div id="login-form-container" class="auth-form-section">
+            <h2>Iniciar Sesión</h2>
+            <div class="auth-form">
+                <input type="email" id="email-login-input" placeholder="Correo electrónico" required>
+                <input type="password" id="password-login-input" placeholder="Contraseña" required>
+                <button id="login-btn">Iniciar Sesión</button>
+            </div>
+            <div class="auth-toggle">
+                <p>¿No tienes una cuenta? <button id="switch-to-register">Regístrate</button></p>
+            </div>
+        </div>
+
+        <div id="register-form-container" class="auth-form-section" style="display:none;">
+            <h2>Registrarse</h2>
+            <div class="auth-form">
+                <input type="email" id="email-register-input" placeholder="Correo electrónico" required>
+                <input type="password" id="password-register-input" placeholder="Contraseña" required>
+                <button id="register-btn">Registrarse</button>
+            </div>
+            <div class="auth-toggle">
+                <p>¿Ya tienes una cuenta? <button id="switch-to-login">Inicia Sesión</button></p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDtC4AXEbZEFuiQZTil3x-4eezjy5eIa6k",
+            authDomain: "centro-de-herramientas.firebaseapp.com",
+            projectId: "centro-de-herramientas",
+            storageBucket: "centro-de-herramientas.firebasestorage.app",
+            messagingSenderId: "245445518910",
+            appId: "1:245445518910:web:b8d93a3fc2cbafced3936f",
+            measurementId: "G-9ZR3EWTD7N"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const loginFormContainer = document.getElementById('login-form-container');
+        const registerFormContainer = document.getElementById('register-form-container');
+        const emailLoginInput = document.getElementById('email-login-input');
+        const passwordLoginInput = document.getElementById('password-login-input');
+        const loginBtn = document.getElementById('login-btn');
+        const emailRegisterInput = document.getElementById('email-register-input');
+        const passwordRegisterInput = document.getElementById('password-register-input');
+        const registerBtn = document.getElementById('register-btn');
+        const switchToRegisterBtn = document.getElementById('switch-to-register');
+        const switchToLoginBtn = document.getElementById('switch-to-login');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        
+        loginBtn.addEventListener('click', async () => {
+            const email = emailLoginInput.value;
+            const password = passwordLoginInput.value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                window.location.href = 'index.html';
+            } catch (error) {
+                alert(`Error al iniciar sesión: ${error.message}`);
+                console.error("Error signing in:", error);
+            }
+        });
+        
+        registerBtn.addEventListener('click', async () => {
+            const email = emailRegisterInput.value;
+            const password = passwordRegisterInput.value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert("Usuario registrado con éxito. Ahora puedes iniciar sesión.");
+                loginFormContainer.style.display = 'block';
+                registerFormContainer.style.display = 'none';
+            } catch (error) {
+                alert(`Error al registrar usuario: ${error.message}`);
+                console.error("Error registering:", error);
+            }
+        });
+
+        switchToRegisterBtn.addEventListener('click', () => {
+            loginFormContainer.style.display = 'none';
+            registerFormContainer.style.display = 'flex';
+        });
+
+        switchToLoginBtn.addEventListener('click', () => {
+            loginFormContainer.style.display = 'flex';
+            registerFormContainer.style.display = 'none';
+        });
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            const isLightTheme = document.body.classList.contains('light-theme');
+            themeToggleBtn.textContent = isLightTheme ? 'Modo Oscuro' : 'Modo Claro';
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
