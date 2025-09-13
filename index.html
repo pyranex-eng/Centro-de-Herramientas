@@ -5,945 +5,387 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Enlaces Dinámicos (con scroll)</title>
     <style>
-        /* Tus estilos actuales se mantienen igual */
-        :root {
-            /* Tema oscuro por defecto */
-            --bg-color: #121212;
-            --main-bg: rgba(30, 30, 30, 0.0);
-            --text-color: #e0e0e0;
-            --secondary-text-color: #a0a0a0;
-            --card-bg: rgba(42, 42, 42, 0.2);
-            --card-border: #333;
-            --hover-transform: translateY(-8px);
-            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.0);
-            --button-color: #007bff;
-            --button-hover-color: #0056b3;
-            --modal-bg: #222;
-            --modal-border: #444;
-            --input-bg: #333;
-            --input-border: #555;
-            --input-text: #fff;
-            --delete-btn-bg: #dc3545;
-            --delete-btn-hover: #c82333;
-            --edit-btn-bg: #ffc107;
-            --edit-btn-hover: #e0a800;
-        }
-
-        body.light-theme {
-            /* Tema claro */
-            --bg-color: #f0f2f5;
-            --main-bg: rgba(255, 255, 255, 0.0);
-            --text-color: #333;
-            --secondary-text-color: #6c757d;
-            --card-bg: rgba(248, 249, 250, 0.2);
-            --card-border: #e9ecef;
-            --hover-transform: translateY(-8px);
-            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.0);
-            --button-color: #007bff;
-            --button-hover-color: #0056b3;
-            --modal-bg: #fff;
-            --modal-border: #888;
-            --input-bg: #fff;
-            --input-border: #ccc;
-            --input-text: #333;
-            --delete-btn-bg: #dc3545;
-            --delete-btn-hover: #c82333;
-            --edit-btn-bg: #ffc107;
-            --edit-btn-hover: #e0a800;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            transition: background-color 0.5s, color 0.5s;
-            position: relative;
-            overflow: hidden;
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-
-        .particle-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.15;
-            background-color: var(--bg-color);
-            transition: background-color 0.5s;
-        }
-
-        .controls {
-            width: 100%;
-            max-width: 1200px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .controls button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background-color: var(--button-color);
-            color: white;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        
-        #logout-btn {
-            background-color: #dc3545;
-        }
-
-        #logout-btn:hover {
-            background-color: #c82333;
-        }
-
-        .controls button:hover {
-            background-color: var(--button-hover-color);
-        }
-        
-        .grid-container-wrapper {
-            width: 100%;
-            max-width: 1200px;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            box-sizing: border-box;
-            background-color: var(--main-bg);
-            transition: background-color 0.5s, box-shadow 0.5s;
-            backdrop-filter: blur(10px); /* Efecto de cristal esmerilado */
-            -webkit-backdrop-filter: blur(10px); /* Para compatibilidad con Safari */
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 20px;
-            max-height: calc(100vh - 150px);
-            overflow-y: auto;
-            padding-right: 15px;
-        }
-        
-        @media (max-width: 768px) {
-            .grid-container {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 15px;
-            }
-        }
-        
-        .grid-container::-webkit-scrollbar {
-            width: 10px;
-        }
-        
-        .grid-container::-webkit-scrollbar-thumb {
-            background-color: var(--secondary-text-color);
-            border-radius: 5px;
-        }
-        
-        .grid-container::-webkit-scrollbar-track {
-            background-color: transparent;
-        }
-
-        .grid-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            padding: 20px 10px;
-            border-radius: 15px;
-            text-decoration: none;
-            color: var(--secondary-text-color);
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            position: relative;
-            cursor: move;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.5s, border-color 0.5s;
-        }
-
-        .grid-item:hover {
-            transform: var(--hover-transform);
-            box-shadow: var(--hover-shadow);
-        }
-
-        .grid-item.dragging {
-            opacity: 0.5;
-            transform: scale(1.05);
-        }
-
-        .grid-item img {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            object-fit: contain;
-        }
-
-        .link-title {
-            font-size: 14px;
-            word-break: break-all;
-            color: var(--text-color);
-            font-weight: bold;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            width: 100%;
-        }
-
-        .delete-btn, .edit-btn {
-            position: absolute;
-            top: 5px;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            font-size: 14px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            visibility: hidden;
-            opacity: 0;
-            transition: visibility 0s, opacity 0.3s, background-color 0.5s;
-        }
-
-        .edit-btn {
-            right: 5px;
-            background-color: var(--edit-btn-bg);
-            color: var(--text-color);
-        }
-
-        .delete-btn {
-            left: 5px;
-            background-color: var(--delete-btn-bg);
-        }
-        
-        .delete-btn:hover {
-            background-color: var(--delete-btn-hover);
-        }
-        
-        .edit-btn:hover {
-            background-color: var(--edit-btn-hover);
-        }
-
-        .grid-item:hover .delete-btn, .grid-item:hover .edit-btn {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding-top: 60px;
-        }
-
-        .modal-content {
-            background-color: var(--modal-bg);
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid var(--modal-border);
-            width: 80%;
-            max-width: 500px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            position: relative;
-            color: var(--text-color);
-        }
-
-        .close-btn {
-            color: var(--secondary-text-color);
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .modal-content input {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid var(--input-border);
-            border-radius: 5px;
-            background-color: var(--input-bg);
-            color: var(--input-text);
-        }
-
-        .modal-content button {
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .modal-content button:hover {
-            background-color: #218838;
-        }
-        
-        /* Loading indicator */
-        .loading {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            border-radius: 8px;
-            z-index: 2000;
-        } :root {
-            /* Tema oscuro por defecto */
-            --bg-color: #121212;
-            --main-bg: rgba(30, 30, 30, 0.7);
-            --text-color: #e0e0e0;
-            --secondary-text-color: #a0a0a0;
-            --card-bg: rgba(42, 42, 42, 0.8);
-            --card-border: #333;
-            --hover-transform: translateY(-8px);
-            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-            --button-color: #007bff;
-            --button-hover-color: #0056b3;
-            --modal-bg: #222;
-            --modal-border: #444;
-            --input-bg: #333;
-            --input-border: #555;
-            --input-text: #fff;
-            --delete-btn-bg: #dc3545;
-            --delete-btn-hover: #c82333;
-            --edit-btn-bg: #ffc107;
-            --edit-btn-hover: #e0a800;
-        }
-
-        body.light-theme {
-            /* Tema claro */
-            --bg-color: #f0f2f5;
-            --main-bg: rgba(255, 255, 255, 0.7);
-            --text-color: #333;
-            --secondary-text-color: #6c757d;
-            --card-bg: rgba(248, 249, 250, 0.8);
-            --card-border: #e9ecef;
-            --hover-transform: translateY(-8px);
-            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            --button-color: #007bff;
-            --button-hover-color: #0056b3;
-            --modal-bg: #fff;
-            --modal-border: #888;
-            --input-bg: #fff;
-            --input-border: #ccc;
-            --input-text: #333;
-            --delete-btn-bg: #dc3545;
-            --delete-btn-hover: #c82333;
-            --edit-btn-bg: #ffc107;
-            --edit-btn-hover: #e0a800;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            transition: background-color 0.5s, color 0.5s;
-            position: relative;
-            overflow: hidden;
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-
-        .particle-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.15;
-            background-color: var(--bg-color);
-            transition: background-color 0.5s;
-        }
-
-        .controls {
-            width: 100%;
-            max-width: 1200px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .controls button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background-color: var(--button-color);
-            color: white;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        
-        #logout-btn {
-            background-color: #dc3545;
-        }
-
-        #logout-btn:hover {
-            background-color: #c82333;
-        }
-
-        .controls button:hover {
-            background-color: var(--button-hover-color);
-        }
-        
-        .grid-container-wrapper {
-            width: 100%;
-            max-width: 1200px;
-            padding: 30px;
-            border-radius: 20px;
-            box-sizing: border-box;
-            background-color: transparent; /* Haz el fondo invisible */
-            box-shadow: none; /* Elimina la sombra */
-            transition: background-color 0.5s, box-shadow 0.5s;
-            backdrop-filter: none; /* Elimina el efecto borroso si lo agregaste */
-            -webkit-backdrop-filter: none;
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 20px;
-            max-height: calc(100vh - 150px);
-            overflow-y: auto;
-            padding-right: 15px;
-        }
-        
-        @media (max-width: 768px) {
-            .grid-container {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 15px;
-            }
-        }
-        
-        .grid-container::-webkit-scrollbar {
-            width: 10px;
-        }
-        
-        .grid-container::-webkit-scrollbar-thumb {
-            background-color: var(--secondary-text-color);
-            border-radius: 5px;
-        }
-        
-        .grid-container::-webkit-scrollbar-track {
-            background-color: transparent;
-        }
-
-        .grid-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            padding: 20px 10px;
-            border-radius: 15px;
-            text-decoration: none;
-            color: var(--secondary-text-color);
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            position: relative;
-            cursor: move;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.5s, border-color 0.5s;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .grid-item:hover {
-            transform: var(--hover-transform);
-            box-shadow: var(--hover-shadow);
-        }
-
-        .grid-item.dragging {
-            opacity: 0.5;
-            transform: scale(1.05);
-        }
-
-        .grid-item img {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            object-fit: contain;
-        }
-
-        .link-title {
-            font-size: 14px;
-            word-break: break-all;
-            color: var(--text-color);
-            font-weight: bold;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            width: 100%;
-        }
-
-        .delete-btn, .edit-btn {
-            position: absolute;
-            top: 5px;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            font-size: 14px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            visibility: hidden;
-            opacity: 0;
-            transition: visibility 0s, opacity 0.3s, background-color 0.5s;
-        }
-
-        .edit-btn {
-            right: 5px;
-            background-color: var(--edit-btn-bg);
-            color: var(--text-color);
-        }
-
-        .delete-btn {
-            left: 5px;
-            background-color: var(--delete-btn-bg);
-        }
-        
-        .delete-btn:hover {
-            background-color: var(--delete-btn-hover);
-        }
-        
-        .edit-btn:hover {
-            background-color: var(--edit-btn-hover);
-        }
-
-        .grid-item:hover .delete-btn, .grid-item:hover .edit-btn {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding-top: 60px;
-        }
-
-        .modal-content {
-            background-color: var(--modal-bg);
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid var(--modal-border);
-            width: 80%;
-            max-width: 500px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            position: relative;
-            color: var(--text-color);
-        }
-
-        .close-btn {
-            color: var(--secondary-text-color);
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .modal-content input {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid var(--input-border);
-            border-radius: 5px;
-            background-color: var(--input-bg);
-            color: var(--input-text);
-        }
-
-        .modal-content button {
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .modal-content button:hover {
-            background-color: #218838;
-        }
-        
-        /* Loading indicator */
-        .loading {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            border-radius: 8px;
-            z-index: 2000;
-        }
     :root {
-            /* Tema oscuro por defecto */
-            --bg-color: #121212;
-            --main-bg: rgba(30, 30, 30, 0.7);
-            --text-color: #e0e0e0;
-            --secondary-text-color: #a0a0a0;
-            --card-bg: rgba(42, 42, 42, 0.2);
-            --card-border: #333;
-            --hover-transform: translateY(-8px);
-            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.0);
-            --button-color: #007bff;
-            --button-hover-color: #0056b3;
-            --modal-bg: #222;
-            --modal-border: #444;
-            --input-bg: #333;
-            --input-border: #555;
-            --input-text: #fff;
-            --delete-btn-bg: #dc3545;
-            --delete-btn-hover: #c82333;
-            --edit-btn-bg: #ffc107;
-            --edit-btn-hover: #e0a800;
-        }
+        /* Tema oscuro por defecto - mejorado con tonos azul cian */
+        --bg-color: #0a1929;
+        --main-bg: rgba(15, 30, 45, 0.7);
+        --text-color: #e0f7ff;
+        --secondary-text-color: #88c9ff;
+        --card-bg: rgba(25, 50, 75, 0.4);
+        --card-border: rgba(0, 200, 255, 0.3);
+        --hover-transform: translateY(-8px);
+        --hover-shadow: 0 8px 25px rgba(0, 200, 255, 0.4);
+        --button-color: #0088cc;
+        --button-hover-color: #00a0e0;
+        --modal-bg: #152635;
+        --modal-border: rgba(0, 200, 255, 0.4);
+        --input-bg: rgba(20, 40, 60, 0.8);
+        --input-border: rgba(0, 180, 255, 0.5);
+        --input-text: #e0f7ff;
+        --delete-btn-bg: #ff4757;
+        --delete-btn-hover: #ff3742;
+        --edit-btn-bg: #00d4ff;
+        --edit-btn-hover: #00b8e0;
+        --matrix-color: rgba(0, 255, 255, 0.15);
+        --matrix-opacity: 0.7; /* Nueva variable para controlar opacidad */
+    }
 
-        body.light-theme {
-            /* Tema claro */
-            --bg-color: #f0f2f5;
-            --main-bg: rgba(255, 255, 255, 0.7);
-            --text-color: #333;
-            --secondary-text-color: #6c757d;
-            --card-bg: rgba(248, 249, 250, 0.8);
-            --card-border: #e9ecef;
-            --hover-transform: translateY(-8px);
-            --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            --button-color: #007bff;
-            --button-hover-color: #0056b3;
-            --modal-bg: #fff;
-            --modal-border: #888;
-            --input-bg: #fff;
-            --input-border: #ccc;
-            --input-text: #333;
-            --delete-btn-bg: #dc3545;
-            --delete-btn-hover: #c82333;
-            --edit-btn-bg: #ffc107;
-            --edit-btn-hover: #e0a800;
-        }
+    body.light-theme {
+        /* Tema claro con tonos azul cian */
+        --bg-color: #e6f7ff;
+        --main-bg: rgba(230, 247, 255, 0.7);
+        --text-color: #003366;
+        --secondary-text-color: #0066aa;
+        --card-bg: rgba(200, 230, 255, 0.8);
+        --card-border: rgba(0, 150, 255, 0.3);
+        --hover-shadow: 0 8px 20px rgba(0, 150, 255, 0.2);
+        --button-color: #0088cc;
+        --button-hover-color: #0066aa;
+        --modal-bg: #ffffff;
+        --modal-border: #99d6ff;
+        --input-bg: #ffffff;
+        --input-border: #99d6ff;
+        --input-text: #003366;
+        --delete-btn-bg: #ff4757;
+        --delete-btn-hover: #ff3742;
+        --edit-btn-bg: #00a0e0;
+        --edit-btn-hover: #0088cc;
+        --matrix-color: rgba(0, 180, 255, 0.1);
+        --matrix-opacity: 0.5; /* Valor diferente para tema claro */
+    }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            transition: background-color 0.5s, color 0.5s;
-            position: relative;
-            overflow: hidden;
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
+    /* Clase para cuando hay imagen de fondo */
+    body.has-background-image .particle-canvas {
+        opacity: 0 !important;
+        visibility: hidden;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
 
-        .particle-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.15;
-            background-color: var(--bg-color);
-            transition: background-color 0.5s;
-        }
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        transition: background-color 0.5s, color 0.5s;
+        position: relative;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
 
-        .controls {
-            width: 100%;
-            max-width: 1200px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+    .particle-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        opacity: var(--matrix-opacity);
+        background-color: transparent;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+        pointer-events: none; /* Para que no interfiera con los clics */
+    }
 
-        .controls button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background-color: var(--button-color);
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background-color 0.3s, transform 0.2s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        #logout-btn {
-            background-color: #dc3545;
-        }
+    .controls {
+        width: 100%;
+        max-width: 1200px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
 
-        #logout-btn:hover {
-            background-color: #c82333;
-            transform: translateY(-2px);
-        }
+    .controls button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background-color: var(--button-color);
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .controls button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: 0.5s;
+    }
+    
+    .controls button:hover::before {
+        left: 100%;
+    }
+    
+    #logout-btn {
+        background-color: var(--delete-btn-bg);
+    }
 
-        .controls button:hover {
-            background-color: var(--button-hover-color);
-            transform: translateY(-2px);
-        }
+    #logout-btn:hover {
+        background-color: var(--delete-btn-hover);
+        transform: translateY(-2px);
+    }
 
-        .grid-container-wrapper {
-            width: 100%;
-            max-width: 1200px;
-            padding: 30px;
-            border-radius: 20px;
-            box-sizing: border-box;
-            background-color: transparent;
-            box-shadow: none;
-            transition: background-color 0.5s, box-shadow 0.5s;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
-        }
+    .controls button:hover {
+        background-color: var(--button-hover-color);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
 
+    .grid-container-wrapper {
+        width: 100%;
+        max-width: 1200px;
+        padding: 30px;
+        border-radius: 20px;
+        box-sizing: border-box;
+        background-color: transparent;
+        box-shadow: none;
+        transition: background-color 0.5s, box-shadow 0.5s;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 20px;
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+        padding-right: 15px;
+    }
+    
+    @media (max-width: 768px) {
         .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 20px;
-            max-height: calc(100vh - 150px);
-            overflow-y: auto;
-            padding-right: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
         }
-        
-        @media (max-width: 768px) {
-            .grid-container {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 15px;
-            }
-        }
-        
-        .grid-container::-webkit-scrollbar {
-            width: 10px;
-        }
-        
-        .grid-container::-webkit-scrollbar-thumb {
-            background-color: var(--secondary-text-color);
-            border-radius: 5px;
-        }
-        
-        .grid-container::-webkit-scrollbar-track {
-            background-color: transparent;
-        }
+    }
+    
+    .grid-container::-webkit-scrollbar {
+        width: 10px;
+    }
+    
+    .grid-container::-webkit-scrollbar-thumb {
+        background-color: var(--secondary-text-color);
+        border-radius: 5px;
+    }
+    
+    .grid-container::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
 
-        .grid-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            padding: 20px 10px;
-            border-radius: 15px;
-            text-decoration: none;
-            color: var(--secondary-text-color);
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            position: relative;
-            cursor: move;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.5s, border-color 0.5s;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
+    .grid-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 20px 10px;
+        border-radius: 15px;
+        text-decoration: none;
+        color: var(--secondary-text-color);
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border);
+        position: relative;
+        cursor: move;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
 
-        .grid-item:hover {
-            transform: var(--hover-transform);
-            box-shadow: var(--hover-shadow);
-        }
+    .grid-item:hover {
+        transform: var(--hover-transform);
+        box-shadow: var(--hover-shadow);
+        border-color: rgba(0, 200, 255, 0.6);
+    }
 
-        .grid-item.dragging {
-            opacity: 0.5;
-            transform: scale(1.05);
-        }
+    .grid-item.dragging {
+        opacity: 0.5;
+        transform: scale(1.05);
+    }
 
-        .grid-item img {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            object-fit: contain;
-        }
+    .grid-item img {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
 
-        .link-title {
-            font-size: 14px;
-            word-break: break-all;
-            color: var(--text-color);
-            font-weight: bold;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            width: 100%;
-        }
+    .grid-item:hover img {
+        transform: scale(1.1);
+    }
 
-        .delete-btn, .edit-btn {
-            position: absolute;
-            top: 5px;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            font-size: 14px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            visibility: hidden;
-            opacity: 0;
-            transition: visibility 0s, opacity 0.3s, background-color 0.5s;
-        }
+    .link-title {
+        font-size: 14px;
+        word-break: break-all;
+        color: var(--text-color);
+        font-weight: bold;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 100%;
+        transition: color 0.3s ease;
+    }
 
-        .edit-btn {
-            right: 5px;
-            background-color: var(--edit-btn-bg);
-            color: var(--text-color);
-        }
+    .grid-item:hover .link-title {
+        color: var(--secondary-text-color);
+    }
 
-        .delete-btn {
-            left: 5px;
-            background-color: var(--delete-btn-bg);
-        }
-        
-        .delete-btn:hover {
-            background-color: var(--delete-btn-hover);
-        }
-        
-        .edit-btn:hover {
-            background-color: var(--edit-btn-hover);
-        }
+    .delete-btn, .edit-btn {
+        position: absolute;
+        top: 5px;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        font-size: 14px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
 
-        .grid-item:hover .delete-btn, .grid-item:hover .edit-btn {
-            visibility: visible;
-            opacity: 1;
-        }
+    .edit-btn {
+        right: 5px;
+        background-color: var(--edit-btn-bg);
+        color: var(--text-color);
+    }
 
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding-top: 60px;
-        }
+    .delete-btn {
+        left: 5px;
+        background-color: var(--delete-btn-bg);
+    }
+    
+    .delete-btn:hover {
+        background-color: var(--delete-btn-hover);
+        transform: scale(1.1);
+    }
+    
+    .edit-btn:hover {
+        background-color: var(--edit-btn-hover);
+        transform: scale(1.1);
+    }
 
-        .modal-content {
-            background-color: var(--modal-bg);
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid var(--modal-border);
-            width: 80%;
-            max-width: 500px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            position: relative;
-            color: var(--text-color);
-        }
+    .grid-item:hover .delete-btn, .grid-item:hover .edit-btn {
+        visibility: visible;
+        opacity: 1;
+    }
 
-        .close-btn {
-            color: var(--secondary-text-color);
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding-top: 60px;
+    }
 
-        .modal-content input {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid var(--input-border);
-            border-radius: 5px;
-            background-color: var(--input-bg);
-            color: var(--input-text);
-        }
+    .modal-content {
+        background-color: var(--modal-bg);
+        margin: 5% auto;
+        padding: 25px;
+        border: 1px solid var(--modal-border);
+        width: 80%;
+        max-width: 500px;
+        border-radius: 15px;
+        box-shadow: 0 5px 25px rgba(0, 150, 255, 0.2);
+        position: relative;
+        color: var(--text-color);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
 
-        .modal-content button {
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+    .close-btn {
+        color: var(--secondary-text-color);
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+    
+    .close-btn:hover {
+        color: var(--button-hover-color);
+    }
 
-        .modal-content button:hover {
-            background-color: #218838;
-        }
-        
-        /* Loading indicator */
-        .loading {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            border-radius: 8px;
-            z-index: 2000;
-        }
-    </style>
+    .modal-content input {
+        width: calc(100% - 20px);
+        padding: 12px;
+        margin-bottom: 15px;
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        background-color: var(--input-bg);
+        color: var(--input-text);
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .modal-content input:focus {
+        outline: none;
+        border-color: var(--button-color);
+        box-shadow: 0 0 0 2px rgba(0, 136, 204, 0.2);
+    }
+
+    .modal-content button {
+        padding: 12px 24px;
+        background-color: var(--button-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .modal-content button:hover {
+        background-color: var(--button-hover-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Loading indicator */
+    .loading {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        border-radius: 8px;
+        z-index: 2000;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+</style>
 </head>
 <body>
     <canvas id="particle-canvas" class="particle-canvas"></canvas>
@@ -1026,380 +468,331 @@
         let particleAnimation = null;
 
         const canvas = document.getElementById('particle-canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        const numParticles = 100;
+    const ctx = canvas.getContext('2d');
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+    // Ajustar el tamaño del canvas
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    // Inicializar el canvas
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Sistema de partículas para el efecto Matrix
+    class ParticleSystem {
+        constructor() {
+            this.particles = [];
+            this.particleCount = Math.floor(canvas.width * canvas.height / 5000);
+            this.columns = Math.floor(canvas.width / 20);
+            this.columnWidth = canvas.width / this.columns;
+            this.initializeParticles();
         }
 
-        function createParticle() {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            const size = Math.random() * 2 + 1;
-            const speedX = (Math.random() - 0.5) * 0.5;
-            const speedY = (Math.random() - 0.5) * 0.5;
-            const color = Math.random() < 0.5 ? 'rgba(0, 255, 255, 0.5)' : 'rgba(255, 215, 0, 0.5)';
-            return { x, y, size, speedX, speedY, color };
-        }
-
-        function initParticles() {
-            particles = [];
-            for (let i = 0; i < numParticles; i++) {
-                particles.push(createParticle());
+        initializeParticles() {
+            for (let i = 0; i < this.particleCount; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = Math.random() * 3 + 1;
+                const speed = Math.random() * 3 + 1;
+                const opacity = Math.random() * 0.5 + 0.1;
+                this.particles.push({ x, y, size, speed, opacity });
             }
         }
 
-        function drawParticles() {
+        update() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-color');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            particles.forEach(p => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-
-                p.x += p.speedX;
-                p.y += p.speedY;
-
-                if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
-                    Object.assign(p, createParticle());
-                }
-            });
-
-            particleAnimation = requestAnimationFrame(drawParticles);
-        }
-
-        function stopParticleAnimation() {
-            cancelAnimationFrame(particleAnimation);
-        }
-
-        function startParticleAnimation() {
-            if (!particleAnimation) {
-                initParticles();
-                drawParticles();
-            }
-        }
-
-        function setTableBackground(url) {
-            gridContainerWrapper.style.backgroundImage = `url('${url}')`;
-            gridContainerWrapper.style.backgroundColor = 'transparent';
-        }
-        
-        function removeTableBackground() {
-            gridContainerWrapper.style.backgroundImage = 'none';
-            gridContainerWrapper.style.backgroundColor = '';
-        }
-
-        // Función para comprimir imagen y convertir a base64
-        function compressImage(file, callback) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    // Tamaño máximo para la imagen (800px de ancho máximo)
-                    let width = img.width;
-                    let height = img.height;
-                    const MAX_WIDTH = 800;
-                    
-                    if (width > MAX_WIDTH) {
-                        height = (height * MAX_WIDTH) / width;
-                        width = MAX_WIDTH;
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Convertir a base64 con compresión (calidad 0.7)
-                    const base64 = canvas.toDataURL('image/jpeg', 0.7);
-                    callback(base64);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Función para guardar el fondo en Realtime Database
-        function saveBackgroundToDatabase(imageData) {
-            if (!userUid) return;
             
-            loadingIndicator.style.display = 'block';
-            
-            // Guardar la imagen en base64 en Realtime Database
-            set(backgroundRef, imageData)
-                .then(() => {
-                    console.log("Fondo guardado correctamente");
-                    loadingIndicator.style.display = 'none';
-                })
-                .catch((error) => {
-                    console.error("Error al guardar el fondo:", error);
-                    loadingIndicator.style.display = 'none';
-                    alert("Error al guardar el fondo: " + error.message);
-                });
-        }
-        
-        // --- COMIENZA EL BLOQUE DE CÓDIGO CORREGIDO ---
-        function loadBackgroundFromDatabase() {
-            if (!userUid) return;
-
-            // Escucha los cambios en la base de datos para el fondo
-            onValue(backgroundRef, (snapshot) => {
-                const backgroundData = snapshot.val();
-                if (backgroundData) {
-                    // Si hay datos, establece la imagen de fondo en el cuerpo de la página
-                    document.body.style.backgroundImage = `url('${backgroundData}')`;
-                    document.body.style.backgroundSize = 'cover';
-                    document.body.style.backgroundPosition = 'center';
-                    document.body.style.backgroundAttachment = 'fixed';
-                } else {
-                    // Si no hay datos, quita la imagen de fondo
-                    document.body.style.backgroundImage = 'none';
-                }
-            }, (error) => {
-                console.error("Error al cargar el fondo:", error);
-            });
-        }
-        // --- TERMINA EL BLOQUE DE CÓDIGO CORREGIDO ---
-
-
-        // Event listeners
-        setBgTableBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
+            for (let i = 0; i < this.particles.length; i++) {
+                const p = this.particles[i];
                 
-                // Comprimir la imagen antes de guardarla
-                compressImage(file, (compressedImage) => {
-                    saveBackgroundToDatabase(compressedImage);
-                });
+                // Mover partícula hacia abajo
+                p.y += p.speed;
+                
+                // Si la partícula sale de la pantalla, reiniciarla arriba
+                if (p.y > canvas.height) {
+                    p.y = 0;
+                    p.x = Math.random() * canvas.width;
+                    p.speed = Math.random() * 3 + 1;
+                    p.opacity = Math.random() * 0.5 + 0.1;
+                }
+                
+                // Dibujar partícula
+                ctx.fillStyle = `rgba(0, 255, 255, ${p.opacity})`;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+                
+                // Dibujar estela (efecto de rastro)
+                ctx.beginPath();
+                ctx.moveTo(p.x + p.size/2, p.y + p.size/2);
+                ctx.lineTo(p.x + p.size/2, p.y - p.size * 2);
+                ctx.strokeStyle = `rgba(0, 255, 255, ${p.opacity * 0.3})`;
+                ctx.lineWidth = p.size/2;
+                ctx.stroke();
             }
-        });
+        }
+    }
 
-        removeBgTableBtn.addEventListener('click', () => {
-            if (userUid) {
-                // Eliminar el fondo de la base de datos
-                remove(backgroundRef)
-                    .then(() => {
-                        removeTableBackground();
-                    })
-                    .catch((error) => {
-                        console.error("Error al eliminar el fondo:", error);
-                    });
-            }
-        });
+    // Iniciar animación de partículas
+    function startParticleAnimation() {
+        particleAnimation = new ParticleSystem();
+        
+        function animate() {
+            particleAnimation.update();
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    }
 
-        // Escuchar cambios en la autenticación
+    // Comprobar si hay imagen de fondo y ocultar el efecto Matrix
+    function checkBackgroundImage() {
+        const hasBg = document.body.style.backgroundImage !== '';
+        if (hasBg) {
+            document.body.classList.add('has-background-image');
+        } else {
+            document.body.classList.remove('has-background-image');
+        }
+    }
+
+    // Iniciar la animación de partículas
+    startParticleAnimation();
+
+        // Verificar el estado de autenticación
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 userUid = user.uid;
-                // Actualizar referencias con el UID del usuario
                 linksRef = ref(database, `users/${userUid}/links`);
                 backgroundRef = ref(database, `users/${userUid}/background`);
                 
-                // Cargar enlaces y fondo
-                loadLinks();
-                loadBackgroundFromDatabase();
-                startParticleAnimation();
+                // Cargar enlaces
+                onValue(linksRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        links = data;
+                        renderLinks();
+                    } else {
+                        gridContainer.innerHTML = '';
+                        links = {};
+                    }
+                });
+                
+                // Cargar imagen de fondo si existe
+                onValue(backgroundRef, (snapshot) => {
+                    const bgData = snapshot.val();
+                    if (bgData && bgData.imageUrl) {
+                        document.body.style.backgroundImage = `url('${bgData.imageUrl}')`;
+                        document.body.classList.add('has-background-image');
+                    } else {
+                        document.body.style.backgroundImage = '';
+                        document.body.classList.remove('has-background-image');
+                    }
+                });
+                
+                // Configurar eventos
+                setupEventListeners();
             } else {
-                // Usuario no autenticado, redirigir al login_registro
+                // Redirigir a la página de inicio de sesión si no está autenticado
                 window.location.href = 'login_registro.html';
             }
         });
 
-        // Resto del código (funciones para manejar enlaces, tema, etc.) se mantiene igual
-        function loadLinks() {
-            onValue(linksRef, (snapshot) => {
-                links = snapshot.val() || {};
-                renderLinks();
+        function setupEventListeners() {
+            // Evento para cerrar sesión
+            logoutBtn.addEventListener('click', () => {
+                signOut(auth).then(() => {
+                    window.location.href = 'login_registro.html';
+                }).catch((error) => {
+                    console.error('Error al cerrar sesión:', error);
+                });
+            });
+
+            // Evento para cambiar tema
+            themeToggleBtn.addEventListener('click', () => {
+                document.body.classList.toggle('light-theme');
+                const isLightTheme = document.body.classList.contains('light-theme');
+                localStorage.setItem('theme', isLightTheme ? 'light' : 'dark');
+            });
+
+            // Evento para agregar enlace
+            addLinkBtn.addEventListener('click', () => {
+                linkKeyInput.value = '';
+                linkUrlInput.value = '';
+                linkTitleInput.value = '';
+                modal.style.display = 'block';
+            });
+
+            // Evento para establecer fondo
+            setBgTableBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // Evento para quitar fondo
+            removeBgTableBtn.addEventListener('click', () => {
+                set(backgroundRef, null).then(() => {
+                    document.body.style.backgroundImage = '';
+                    checkBackgroundImage();
+                }).catch((error) => {
+                    console.error('Error al eliminar el fondo:', error);
+                });
+            });
+
+            // Evento para subir imagen
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    loadingIndicator.style.display = 'block';
+                    
+                    // Aquí deberías subir la imagen a Firebase Storage
+                    // Por ahora, usaremos una URL local para la demostración
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const imageUrl = event.target.result;
+                        
+                        // Guardar la URL en la base de datos
+                        set(backgroundRef, { imageUrl: imageUrl }).then(() => {
+                            document.body.style.backgroundImage = `url('${imageUrl}')`;
+                            checkBackgroundImage();
+                            loadingIndicator.style.display = 'none';
+                        }).catch((error) => {
+                            console.error('Error al guardar el fondo:', error);
+                            loadingIndicator.style.display = 'none';
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Eventos para el modal
+            closeBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            saveLinkBtn.addEventListener('click', () => {
+                const url = linkUrlInput.value.trim();
+                const title = linkTitleInput.value.trim() || new URL(url).hostname;
+                const key = linkKeyInput.value;
+                
+                if (url) {
+                    if (key) {
+                        // Actualizar enlace existente
+                        const linkRef = ref(database, `users/${userUid}/links/${key}`);
+                        update(linkRef, { url, title }).then(() => {
+                            modal.style.display = 'none';
+                        }).catch((error) => {
+                            console.error('Error al actualizar el enlace:', error);
+                        });
+                    } else {
+                        // Agregar nuevo enlace
+                        push(linksRef, { url, title }).then(() => {
+                            modal.style.display = 'none';
+                        }).catch((error) => {
+                            console.error('Error al guardar el enlace:', error);
+                        });
+                    }
+                }
             });
         }
 
         function renderLinks() {
             gridContainer.innerHTML = '';
-            Object.keys(links).forEach(key => {
-                const link = links[key];
-                const gridItem = document.createElement('div');
+            
+            Object.entries(links).forEach(([key, link]) => {
+                const gridItem = document.createElement('a');
+                gridItem.href = link.url;
+                gridItem.target = '_blank';
+                gridItem.rel = 'noopener noreferrer';
                 gridItem.className = 'grid-item';
                 gridItem.draggable = true;
                 gridItem.dataset.key = key;
-
-                const img = document.createElement('img');
-                img.src = `https://s2.googleusercontent.com/s2/favicons?domain=${link.url}&sz=64`;
-                img.alt = link.title || 'Link icon';
-                img.onerror = () => {
-                    img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJmZWF0aGVyIGZlYXRoZXItbGluayI+PHBhdGggZD0iTTEwIDEzYTUgNSAwIDAgMCA3LjU0LjU0bDMtM2E1IDUgMCAwIDAtNy4wNy03LjA3bC0xLjcyIDEuNzEiPjxwYXRoIGQ9Ik0xNCAxYTUgNSAwIDAgMC03LjU0LS41NGwtMyAzYTUgNSAwIDAgMCA3LjA3IDcuMDdsMS43MS0xLjcxIj48L3BhdGg+PC9zdmc+';
-                };
-
-                const title = document.createElement('div');
-                title.className = 'link-title';
-                title.textContent = link.title || 'Nuevo enlace';
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-btn';
-                deleteBtn.innerHTML = '✕';
-                deleteBtn.onclick = (e) => {
+                
+                // Obtener el favicon del sitio
+                const domain = new URL(link.url).hostname;
+                const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+                
+                gridItem.innerHTML = `
+                    <img src="${faviconUrl}" alt="${link.title}">
+                    <span class="link-title">${link.title}</span>
+                    <button class="delete-btn">✕</button>
+                    <button class="edit-btn">✎</button>
+                `;
+                
+                // Evento para eliminar enlace
+                const deleteBtn = gridItem.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    deleteLink(key);
-                };
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'edit-btn';
-                editBtn.innerHTML = '✎';
-                editBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    editLink(key);
-                };
-
-                gridItem.appendChild(img);
-                gridItem.appendChild(title);
-                gridItem.appendChild(deleteBtn);
-                gridItem.appendChild(editBtn);
-
-                gridItem.addEventListener('click', () => {
-                    window.open(link.url, '_blank');
+                    
+                    const linkRef = ref(database, `users/${userUid}/links/${key}`);
+                    remove(linkRef).catch((error) => {
+                        console.error('Error al eliminar el enlace:', error);
+                    });
                 });
-
+                
+                // Evento para editar enlace
+                const editBtn = gridItem.querySelector('.edit-btn');
+                editBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    linkKeyInput.value = key;
+                    linkUrlInput.value = link.url;
+                    linkTitleInput.value = link.title;
+                    modal.style.display = 'block';
+                });
+                
+                // Eventos para arrastrar y soltar
                 gridItem.addEventListener('dragstart', (e) => {
                     draggedItem = gridItem;
                     setTimeout(() => {
                         gridItem.classList.add('dragging');
                     }, 0);
                 });
-
+                
                 gridItem.addEventListener('dragend', () => {
                     gridItem.classList.remove('dragging');
                     draggedItem = null;
                 });
-
-                gridItem.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                });
-
-                gridItem.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    if (draggedItem && draggedItem !== gridItem) {
-                        const allItems = Array.from(gridContainer.querySelectorAll('.grid-item'));
-                        const fromIndex = allItems.indexOf(draggedItem);
-                        const toIndex = allItems.indexOf(gridItem);
-                        
-                        if (fromIndex !== toIndex) {
-                            // Reorganizar visualmente
-                            if (fromIndex < toIndex) {
-                                gridContainer.insertBefore(draggedItem, gridItem.nextSibling);
-                            } else {
-                                gridContainer.insertBefore(draggedItem, gridItem);
-                            }
-                            
-                            // Reorganizar en base de datos
-                            reorderLinks(fromIndex, toIndex);
-                        }
-                    }
-                });
-
+                
                 gridContainer.appendChild(gridItem);
             });
         }
 
-        function reorderLinks(fromIndex, toIndex) {
-            const linkKeys = Object.keys(links);
-            const movedKey = linkKeys[fromIndex];
-            
-            // Reorganizar el array de claves
-            linkKeys.splice(fromIndex, 1);
-            linkKeys.splice(toIndex, 0, movedKey);
-            
-            // Crear nuevo objeto con el orden correcto
-            const reorderedLinks = {};
-            linkKeys.forEach(key => {
-                reorderedLinks[key] = links[key];
-            });
-            
-            // Actualizar la base de datos
-            set(linksRef, reorderedLinks);
-        }
-
-        function deleteLink(key) {
-            if (confirm('¿Estás seguro de que quieres eliminar este enlace?')) {
-                const linkRef = ref(database, `users/${userUid}/links/${key}`);
-                remove(linkRef);
+        // Funcionalidad de arrastrar y soltar para reordenar
+        gridContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(gridContainer, e.clientY);
+            const draggable = document.querySelector('.dragging');
+            if (draggable && afterElement) {
+                gridContainer.insertBefore(draggable, afterElement);
             }
-        }
-
-        function editLink(key) {
-            const link = links[key];
-            linkKeyInput.value = key;
-            linkUrlInput.value = link.url;
-            linkTitleInput.value = link.title || '';
-            modal.style.display = 'block';
-        }
-
-        function addLink() {
-            linkKeyInput.value = '';
-            linkUrlInput.value = '';
-            linkTitleInput.value = '';
-            modal.style.display = 'block';
-        }
-
-        function saveLink() {
-            const url = linkUrlInput.value.trim();
-            const title = linkTitleInput.value.trim();
-            const key = linkKeyInput.value;
-
-            if (!url) {
-                alert('Por favor, ingresa una URL válida');
-                return;
-            }
-
-            // Asegurar que la URL tenga el protocolo http si no lo tiene
-            let finalUrl = url;
-            if (!/^https?:\/\//i.test(url)) {
-                finalUrl = 'https://' + url;
-            }
-
-            const linkData = {
-                url: finalUrl,
-                title: title || null
-            };
-
-            if (key) {
-                // Editar enlace existente
-                const linkRef = ref(database, `users/${userUid}/links/${key}`);
-                update(linkRef, linkData);
-            } else {
-                // Agregar nuevo enlace
-                push(linksRef, linkData);
-            }
-
-            modal.style.display = 'none';
-        }
-
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).then(() => {
-                window.location.href = 'login_registro.html';
-            }).catch((error) => {
-                console.error('Error al cerrar sesión:', error);
-            });
         });
 
-        themeToggleBtn.addEventListener('click', () => {
-            document.body.classList.toggle('light-theme');
-            const isLightTheme = document.body.classList.contains('light-theme');
-            localStorage.setItem('theme', isLightTheme ? 'light' : 'dark');
-            stopParticleAnimation();
-            startParticleAnimation();
+        gridContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            // Aquí puedes guardar el nuevo orden en la base de datos si es necesario
         });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.grid-item:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
 
         // Cargar tema guardado
         const savedTheme = localStorage.getItem('theme');
@@ -1407,28 +800,8 @@
             document.body.classList.add('light-theme');
         }
 
-        addLinkBtn.addEventListener('click', addLink);
-        saveLinkBtn.addEventListener('click', saveLink);
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-
-        // Inicializar canvas y partículas
-        resizeCanvas();
-        window.addEventListener('resize', () => {
-            resizeCanvas();
-            stopParticleAnimation();
-            startParticleAnimation();
-        });
-
-        // Iniciar animación de partículas
-        startParticleAnimation();
+        // Verificar si hay imagen de fondo al cargar la página
+        checkBackgroundImage();
     </script>
 </body>
 </html>
